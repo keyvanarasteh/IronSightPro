@@ -49,7 +49,7 @@ xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
 # Report
 uuid = { version = "1", features = ["v4", "serde"] }
-whoami = "1"
+whoami = "2"
 reqwest = { version = "0.12", features = ["json"] }
 
 # UI
