@@ -1,0 +1,67 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ironsight-core",
+    "crates/ironsight-security",
+    "crates/ironsight-network",
+    "crates/ironsight-memory",
+    "crates/ironsight-kernel",
+    "crates/ironsight-heuristic",
+    "crates/ironsight-response",
+    "crates/ironsight-report",
+    "crates/ironsight-service",
+    "crates/ironsight-ui",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Keyvan Arasteh"]
+
+[workspace.dependencies]
+# Core
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "2"
+toml = "0.8"
+nix = { version = "0.29", features = ["signal", "process", "user"] }
+
+# System
+sysinfo = "0.34"
+crossbeam-channel = "0.5"
+
+# Security
+sha2 = "0.10"
+hex = "0.4"
+
+# Memory / RE
+regex = "1"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
+# Network
+# listeners = "0.4"  # Enable when implementing network module
+
+# Report
+uuid = { version = "1", features = ["v4", "serde"] }
+whoami = "1"
+reqwest = { version = "0.12", features = ["json"] }
+
+# UI
+dioxus = { version = "0.7", features = ["desktop", "router"] }
+
+# Internal crates
+ironsight-core = { path = "crates/ironsight-core" }
+ironsight-security = { path = "crates/ironsight-security" }
+ironsight-network = { path = "crates/ironsight-network" }
+ironsight-memory = { path = "crates/ironsight-memory" }
+ironsight-kernel = { path = "crates/ironsight-kernel" }
+ironsight-heuristic = { path = "crates/ironsight-heuristic" }
+ironsight-response = { path = "crates/ironsight-response" }
+ironsight-report = { path = "crates/ironsight-report" }
+ironsight-service = { path = "crates/ironsight-service" }

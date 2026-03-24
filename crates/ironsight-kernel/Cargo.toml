@@ -1,0 +1,17 @@
+[package]
+name = "ironsight-kernel"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Kernel-level monitoring — eBPF (Linux), ETW (Windows), unified event dispatcher"
+
+[dependencies]
+ironsight-core.workspace = true
+tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
+tracing.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true

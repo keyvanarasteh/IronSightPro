@@ -1,0 +1,66 @@
+.btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    transition: all 0.15s;
+}
+
+.btn:hover { background: var(--bg-hover); border-color: var(--accent-cyan); }
+.btn-scan { border-color: var(--accent-green); }
+.btn-scan:hover { background: rgba(16, 185, 129, 0.15); }
+
+.stat-cards { grid-column: 1 / -1; display: flex; gap: 12px; }
+.stat-card { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.stat-card.risk::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-red)); }
+.stat-card.critical::before { background: var(--accent-red); }
+.stat-card.high::before { background: var(--accent-orange); }
+.stat-card.medium::before { background: var(--accent-yellow); }
+.stat-card.total::before { background: var(--accent-cyan); }
+.stat-card.time::before { background: var(--accent-purple); }
+
+.stat-label { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+.stat-value.risk { color: var(--accent-cyan); }
+.stat-value.critical { color: var(--accent-red); }
+.stat-value.high { color: var(--accent-orange); }
+.stat-value.medium { color: var(--accent-yellow); }
+.stat-value.total { color: var(--text-primary); }
+.stat-value.time { color: var(--accent-purple); }
+
+.process-panel { grid-column: 1 / -1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; }
+.panel-header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: var(--text-secondary); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.process-table-wrap { overflow-y: auto; flex: 1; }
+table.proc { width: 100%; border-collapse: collapse; }
+table.proc th { position: sticky; top: 0; background: var(--bg-secondary); padding: 8px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+table.proc td { padding: 6px 12px; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; color: var(--text-primary); }
+table.proc tr:hover td { background: var(--bg-hover); }
+
+.level-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+.level-clean { color: var(--accent-green); background: rgba(16, 185, 129, 0.1); }
+.level-low { color: var(--accent-yellow); background: rgba(234, 179, 8, 0.1); }
+.level-medium { color: var(--accent-orange); background: rgba(245, 158, 11, 0.1); }
+.level-high { color: var(--accent-red); background: rgba(239, 68, 68, 0.1); }
+.level-critical { color: #ff0000; background: rgba(255, 0, 0, 0.15); font-weight: 900; }
+
+.score-bar { display: inline-block; width: 60px; height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.signal-tag { display: inline-block; padding: 1px 6px; margin: 1px 2px; border-radius: 3px; font-size: 9px; background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+
+/* ── Light Theme Overrides ── */
+[data-theme="light"] .stat-card { box-shadow: var(--shadow-card); }
+[data-theme="light"] .process-panel { box-shadow: var(--shadow-card); }
+[data-theme="light"] .level-clean { background: rgba(16, 185, 129, 0.12); }
+[data-theme="light"] .level-low { background: rgba(234, 179, 8, 0.12); }
+[data-theme="light"] .level-medium { background: rgba(245, 158, 11, 0.12); }
+[data-theme="light"] .level-high { background: rgba(239, 68, 68, 0.12); }
+[data-theme="light"] .level-critical { background: rgba(255, 0, 0, 0.1); color: #dc2626; }
+[data-theme="light"] .score-bar { background: #e2e8f0; }
+[data-theme="light"] .signal-tag { background: rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.2); }
+[data-theme="light"] .btn { box-shadow: var(--shadow-card); }
+[data-theme="light"] .btn:hover { background: var(--bg-hover); }

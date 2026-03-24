@@ -1,0 +1,54 @@
+# ============================================
+# IronSight EDR — Default Configuration
+# ============================================
+# Bu dosya Docker container içinde kullanılır.
+# Özelleştirme: config/ironsight.toml dosyasını düzenleyin.
+# ============================================
+
+[general]
+log_level = "info"
+report_dir = "/var/lib/ironsight/reports"
+dump_dir = "/var/lib/ironsight/dumps"
+
+[scan]
+interval_secs = 300
+top_n = 50
+daemon_mode = true
+proc_root = "/host/proc"
+
+[thresholds]
+low_score = 10
+medium_score = 30
+high_score = 50
+critical_score = 70
+export_min_score = 10
+
+[response]
+auto_response = false
+auto_response_min_score = 70
+forensic_order = ["suspend", "dump", "kill"]
+
+[exclusions]
+names = ["init", "systemd", "sshd", "ironsight"]
+paths = ["/usr/sbin/", "/opt/ironsight/"]
+
+[network]
+suspicious_ports = [4444, 5555, 6667, 6668, 6669, 9050, 1080, 8080, 31337]
+dns_lookup = true
+
+[memory]
+max_region_size_mb = 64
+scan_patterns = true
+wx_detection = true
+
+[watchdog]
+enabled = true
+heartbeat_interval_secs = 10
+max_restarts = 3
+restart_delay_secs = 5
+
+[report]
+format = "json"
+siem_enabled = false
+siem_endpoint = ""
+siem_token = ""

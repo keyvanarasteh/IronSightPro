@@ -1,0 +1,32 @@
+# Build artifacts
+target/
+**/*.rs.bk
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation & Audit
+audit/
+docs/
+*.md
+LICENSE
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+/tmp/
+*.log

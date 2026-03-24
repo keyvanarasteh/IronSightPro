@@ -1,0 +1,13 @@
+[package]
+name = "ironsight-network"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Network analysis — socket-to-PID mapping, listener detection, DNS enrichment"
+
+[dependencies]
+ironsight-core.workspace = true
+serde.workspace = true
+tracing.workspace = true
+thiserror.workspace = true

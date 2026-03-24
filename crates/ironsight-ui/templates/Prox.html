@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronSight — Process Monitor</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;700;800&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0b0c0f;
+            --bg2: #111318;
+            --bg3: #181b22;
+            --bg4: #1e2230;
+            --border: rgba(255, 255, 255, 0.06);
+            --border2: rgba(255, 255, 255, 0.12);
+            --text: #e8eaf0;
+            --text2: #9098b0;
+            --text3: #5a6280;
+            --accent: #4f9cf9;
+            --accent2: #2d7ff9;
+            --green: #3ecf8e;
+            --amber: #f5a623;
+            --red: #f04747;
+            --purple: #a78bfa;
+            --teal: #22d3ee;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Syne', sans-serif;
+            --radius: 10px;
+            --radius2: 14px;
+        }
+
+        html {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 14px;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Layout ─────────────────────────────────────────────────── */
+        .shell {
+            display: grid;
+            grid-template-rows: 52px 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Topbar ──────────────────────────────────────────────────── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .logo {
+            font-family: var(--sans);
+            font-weight: 800;
+            font-size: 17px;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 22px;
+            height: 22px;
+            background: var(--accent);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 13px;
+            height: 13px;
+            fill: #fff;
+        }
+
+        .topbar-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border2);
+        }
+
+        .hostname-badge {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text3);
+            background: var(--bg3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.5
+            }
+        }
+
+        .status-label {
+            font-size: 11px;
+            color: var(--green);
+            font-weight: 500;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .interval-select {
+            font-family: var(--mono);
+            font-size: 11px;
+            background: var(--bg3);
+            border: 1px solid var(--border2);
+            color: var(--text2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .time-display {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        /* ── Main ─────────────────────────────────────────────────────── */
+        .main {
+            display: grid;
+            grid-template-columns: 240px 1fr 280px;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar ──────────────────────────────────────────────────── */
+        .sidebar {
+            border-right: 1px solid var(--border);
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: var(--bg);
+        }
+
+        .sidebar-section-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: var(--text3);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        /* system info cards */
+        .sys-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .sys-card {
+            background: var(--bg3);
+            border-radius: var(--radius);
+            padding: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .sys-card-label {
+            font-size: 10px;
+            color: var(--text3);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .sys-card-value {
+            font-family: var(--mono);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .sys-card-sub {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        /* mini gauge */
+        .gauge-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .gauge-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .gauge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gauge-name {
+            font-size: 11px;
+            color: var(--text2);
+        }
+
+        .gauge-val {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .gauge-bar {
+            height: 4px;
+            background: var(--bg4);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.8s ease;
+        }
+
+        .gauge-fill.cpu {
+            background: var(--accent);
+        }
+
+        .gauge-fill.mem {
+            background: var(--green);
+        }
+
+        .gauge-fill.swap {
+            background: var(--purple);
+        }
+
+        /* nav */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text2);
+            transition: all 0.15s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg3);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--bg4);
+            color: var(--text);
+        }
+
+        .nav-item-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .nav-count {
+            margin-left: auto;
+            font-family: var(--mono);
+            font-size: 10px;
+            background: var(--bg4);
+            padding: 1px 5px;
+            border-radius: 4px;
+            color: var(--text3);
+        }
+
+        /* ── Center pane ──────────────────────────────────────────────── */
+        .center {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* metric row */
+        .metric-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .metric-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-family: var(--mono);
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .metric-sub {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+
+        .metric-delta {
+            font-size: 10px;
+            margin-top: 3px;
+            font-family: var(--mono);
+        }
+
+        .delta-up {
+            color: var(--green);
+        }
+
+        .delta-down {
+            color: var(--red);
+        }
+
+        .delta-neutral {
+            color: var(--text3);
+        }
+
+        /* chart row */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 0 16px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chart-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius2);
+            padding: 14px;
+        }
+
+        .chart-title {
+            font-size: 11px;
+            color: var(--text2);
+            font-weight: 500;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 10px;
+        }
+
+        .legend-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 3px;
+            vertical-align: middle;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* process table */
+        .table-wrap {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+        }
+
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0 8px;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 1;
+        }
+
+        .search-box {
+            flex: 1;
+            background: var(--bg3);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 7px;
+            outline: none;
+        }
+
+        .search-box::placeholder {
+            color: var(--text3);
+        }
+
+        .search-box:focus {
+            border-color: var(--accent);
+        }
+
+        .sort-btn {
+            font-size: 11px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--mono);
+            transition: all 0.12s;
+            white-space: nowrap;
+        }
+
+        .sort-btn:hover,
+        .sort-btn.active {
+            background: var(--bg4);
+            color: var(--text);
+            border-color: var(--border2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead th {
+            padding: 8px 10px;
+            text-align: left;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 40px;
+            background: var(--bg);
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        thead th:hover {
+            color: var(--text2);
+        }
+
+        thead th.sorted {
+            color: var(--accent);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.1s;
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: var(--bg3);
+        }
+
+        tbody tr.selected {
+            background: var(--bg4);
+        }
+
+        tbody tr.spawned {
+            animation: flash-green 2s ease;
+        }
+
+        tbody tr.exited {
+            animation: flash-red 2s ease;
+        }
+
+        @keyframes flash-green {
+
+            0%,
+            100% {
+                background: transparent
+            }
+
+            15% {
+                background: rgba(62, 207, 142, 0.12)
+            }
+        }
+
+        @keyframes flash-red {
+
+            0%,
+            100% {
+                background: transparent
+            }
+
+            15% {
+                background: rgba(240, 71, 71, 0.12)
+            }
+        }
+
+        td {
+            padding: 7px 10px;
+            font-family: var(--mono);
+            color: var(--text2);
+            white-space: nowrap;
+        }
+
+        td.pid {
+            color: var(--text3);
+            font-size: 11px;
+        }
+
+        td.name {
+            color: var(--text);
+            font-weight: 500;
+            font-family: var(--sans);
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        td.cpu {
+            color: var(--text);
+        }
+
+        td.mem {
+            color: var(--text);
+        }
+
+        td.status-cell {}
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-pill.running {
+            background: rgba(62, 207, 142, 0.12);
+            color: var(--green);
+        }
+
+        .status-pill.sleeping {
+            background: rgba(79, 156, 249, 0.12);
+            color: var(--accent);
+        }
+
+        .status-pill.zombie {
+            background: rgba(240, 71, 71, 0.15);
+            color: var(--red);
+        }
+
+        .status-pill.stopped {
+            background: rgba(245, 166, 35, 0.12);
+            color: var(--amber);
+        }
+
+        .status-pill.idle {
+            background: rgba(90, 98, 128, 0.2);
+            color: var(--text3);
+        }
+
+        .cpu-bar-bg {
+            width: 60px;
+            height: 4px;
+            background: var(--bg4);
+            border-radius: 2px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .cpu-bar-fill {
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        /* ── Right panel ──────────────────────────────────────────────── */
+        .right-panel {
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .panel-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-tab {
+            flex: 1;
+            padding: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text3);
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+            letter-spacing: 0.5px;
+        }
+
+        .panel-tab.active {
+            color: var(--text);
+            border-bottom-color: var(--accent);
+        }
+
+        .panel-tab:hover:not(.active) {
+            color: var(--text2);
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* process detail */
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--bg4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: var(--mono);
+            border: 1px solid var(--border2);
+            flex-shrink: 0;
+        }
+
+        .detail-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .detail-pid {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text3);
+        }
+
+        .detail-section {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+        }
+
+        .detail-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text3);
+            margin-bottom: 10px;
+        }
+
+        .kv-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .kv-row:last-child {
+            border-bottom: none;
+        }
+
+        .kv-key {
+            font-size: 11px;
+            color: var(--text3);
+        }
+
+        .kv-val {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text);
+            text-align: right;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-all;
+        }
+
+        .mini-sparkline {
+            width: 100%;
+            height: 40px;
+        }
+
+        /* event log */
+        .log-stream {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: var(--bg2);
+            align-items: flex-start;
+        }
+
+        .log-entry.spawned {
+            border-color: rgba(62, 207, 142, 0.25);
+            background: rgba(62, 207, 142, 0.04);
+        }
+
+        .log-entry.exited {
+            border-color: rgba(240, 71, 71, 0.2);
+            background: rgba(240, 71, 71, 0.04);
+        }
+
+        .log-entry.changed {
+            border-color: rgba(79, 156, 249, 0.2);
+            background: rgba(79, 156, 249, 0.04);
+        }
+
+        .log-type-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .badge-spawn {
+            background: rgba(62, 207, 142, 0.15);
+            color: var(--green);
+        }
+
+        .badge-exit {
+            background: rgba(240, 71, 71, 0.15);
+            color: var(--red);
+        }
+
+        .badge-change {
+            background: rgba(79, 156, 249, 0.15);
+            color: var(--accent);
+        }
+
+        .badge-diff {
+            background: rgba(167, 139, 250, 0.15);
+            color: var(--purple);
+        }
+
+        .log-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .log-proc-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .log-detail {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .log-time {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text3);
+            flex-shrink: 0;
+        }
+
+        /* diff view */
+        .diff-section {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+        }
+
+        .diff-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .diff-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .diff-label.spawned {
+            color: var(--green);
+        }
+
+        .diff-label.exited {
+            color: var(--red);
+        }
+
+        .diff-label.changed {
+            color: var(--amber);
+        }
+
+        .diff-count {
+            font-family: var(--mono);
+            font-size: 11px;
+        }
+
+        .diff-row {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text2);
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .diff-row:last-child {
+            border-bottom: none;
+        }
+
+        .diff-pid {
+            color: var(--text3);
+        }
+
+        .empty-state {
+            font-size: 12px;
+            color: var(--text3);
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        /* tree view */
+        .tree-node {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+        }
+
+        .tree-indent {
+            width: 16px;
+            flex-shrink: 0;
+            border-left: 1px solid var(--border2);
+            border-bottom: 1px dashed var(--border2);
+            height: 12px;
+        }
+
+        .tree-node-name {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text2);
+        }
+
+        .tree-node-pid {
+            font-size: 10px;
+            color: var(--text3);
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 2px;
+        }
+
+        /* cmd chips */
+        .cmd-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .cmd-chip {
+            font-family: var(--mono);
+            font-size: 10px;
+            background: var(--bg4);
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text2);
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* fd badge */
+        .fd-badge {
+            font-family: var(--mono);
+            font-size: 10px;
+            background: rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            padding: 2px 7px;
+            border-radius: 4px;
+            color: var(--purple);
+        }
+
+        .placeholder-msg {
+            font-size: 12px;
+            color: var(--text3);
+            text-align: center;
+            padding: 40px 20px;
+            line-height: 1.7;
+        }
+
+        .placeholder-msg strong {
+            color: var(--text2);
+            font-weight: 500;
+        }
+
+        .no-select {
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="shell">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 16 16">
+                        <path d="M8 1L2 4v4c0 3.3 2.6 6.4 6 7 3.4-.6 6-3.7 6-7V4L8 1z" />
+                    </svg>
+                </div>
+                IronSight
+            </div>
+            <div class="topbar-divider"></div>
+            <span class="hostname-badge" id="hostname-badge">localhost</span>
+            <div class="status-dot"></div>
+            <span class="status-label">monitoring</span>
+            <div class="topbar-right">
+                <span class="time-display" id="clock">--:--:--</span>
+                <select class="interval-select" id="interval-select" onchange="updateInterval(this.value)">
+                    <option value="1000">1s interval</option>
+                    <option value="2000" selected>2s interval</option>
+                    <option value="5000">5s interval</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main -->
+        <div class="main">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div>
+                    <div class="sidebar-section-label">System</div>
+                    <div class="sys-grid">
+                        <div class="sys-card">
+                            <div class="sys-card-label">OS</div>
+                            <div class="sys-card-value" id="os-name">Linux</div>
+                            <div class="sys-card-sub" id="os-ver">6.8.0</div>
+                        </div>
+                        <div class="sys-card">
+                            <div class="sys-card-label">CPUs</div>
+                            <div class="sys-card-value" id="cpu-count">16</div>
+                            <div class="sys-card-sub">logical</div>
+                        </div>
+                        <div class="sys-card">
+                            <div class="sys-card-label">RAM</div>
+                            <div class="sys-card-value" id="total-mem">32 GB</div>
+                            <div class="sys-card-sub" id="used-mem">18.4 used</div>
+                        </div>
+                        <div class="sys-card">
+                            <div class="sys-card-label">Uptime</div>
+                            <div class="sys-card-value" id="uptime">3d 14h</div>
+                            <div class="sys-card-sub" id="proc-count">241 procs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="sidebar-section-label">Load Average</div>
+                    <div class="gauge-row">
+                        <div class="gauge-item">
+                            <div class="gauge-header">
+                                <span class="gauge-name">CPU</span>
+                                <span class="gauge-val" id="cpu-pct" style="color:var(--accent)">--</span>
+                            </div>
+                            <div class="gauge-bar">
+                                <div class="gauge-fill cpu" id="cpu-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="gauge-item">
+                            <div class="gauge-header">
+                                <span class="gauge-name">Memory</span>
+                                <span class="gauge-val" id="mem-pct" style="color:var(--green)">--</span>
+                            </div>
+                            <div class="gauge-bar">
+                                <div class="gauge-fill mem" id="mem-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="gauge-item">
+                            <div class="gauge-header">
+                                <span class="gauge-name">Swap</span>
+                                <span class="gauge-val" id="swap-pct" style="color:var(--purple)">--</span>
+                            </div>
+                            <div class="gauge-bar">
+                                <div class="gauge-fill swap" id="swap-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="gauge-item">
+                            <div class="gauge-header">
+                                <span class="gauge-name">Load 1m</span>
+                                <span class="gauge-val" id="load1" style="color:var(--text2)">--</span>
+                            </div>
+                        </div>
+                        <div class="gauge-item">
+                            <div class="gauge-header">
+                                <span class="gauge-name">Load 5m</span>
+                                <span class="gauge-val" id="load5" style="color:var(--text2)">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="sidebar-section-label">Filter</div>
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                        <div class="nav-item active no-select" onclick="setFilter('all', this)">
+                            <div class="nav-item-dot" style="background:var(--text3)"></div>
+                            All processes
+                            <span class="nav-count" id="count-all">0</span>
+                        </div>
+                        <div class="nav-item no-select" onclick="setFilter('running', this)">
+                            <div class="nav-item-dot" style="background:var(--green)"></div>
+                            Running
+                            <span class="nav-count" id="count-running">0</span>
+                        </div>
+                        <div class="nav-item no-select" onclick="setFilter('sleeping', this)">
+                            <div class="nav-item-dot" style="background:var(--accent)"></div>
+                            Sleeping
+                            <span class="nav-count" id="count-sleeping">0</span>
+                        </div>
+                        <div class="nav-item no-select" onclick="setFilter('zombie', this)">
+                            <div class="nav-item-dot" style="background:var(--red)"></div>
+                            Zombie
+                            <span class="nav-count" id="count-zombie">0</span>
+                        </div>
+                        <div class="nav-item no-select" onclick="setFilter('idle', this)">
+                            <div class="nav-item-dot" style="background:var(--text3)"></div>
+                            Idle
+                            <span class="nav-count" id="count-idle">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:auto">
+                    <div class="sidebar-section-label">Quick actions</div>
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                        <div class="nav-item no-select" onclick="sortBy('cpu')">⬆ Sort by CPU</div>
+                        <div class="nav-item no-select" onclick="sortBy('mem')">⬆ Sort by Memory</div>
+                        <div class="nav-item no-select" onclick="document.getElementById('search').focus()">⌕ Search
+                            process</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center pane -->
+            <div class="center">
+                <!-- Metrics -->
+                <div class="metric-row">
+                    <div class="metric-card">
+                        <div class="metric-label">Processes</div>
+                        <div class="metric-value" id="m-procs">--</div>
+                        <div class="metric-sub" id="m-procs-delta">--</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total CPU</div>
+                        <div class="metric-value" id="m-cpu">--</div>
+                        <div class="metric-sub">sum across cores</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Resident Mem</div>
+                        <div class="metric-value" id="m-mem">--</div>
+                        <div class="metric-sub" id="m-mem-pct">of total</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Spawned</div>
+                        <div class="metric-value" style="color:var(--green)" id="m-spawned">0</div>
+                        <div class="metric-sub">this session</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Exited</div>
+                        <div class="metric-value" style="color:var(--red)" id="m-exited">0</div>
+                        <div class="metric-sub">this session</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="chart-row">
+                    <div class="chart-card">
+                        <div class="chart-title">
+                            CPU history
+                            <div class="chart-legend">
+                                <span><span class="legend-dot" style="background:var(--accent)"></span>total</span>
+                            </div>
+                        </div>
+                        <canvas id="cpu-chart" height="70"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">
+                            Memory history
+                            <div class="chart-legend">
+                                <span><span class="legend-dot" style="background:var(--green)"></span>resident</span>
+                                <span><span class="legend-dot" style="background:var(--purple)"></span>virtual</span>
+                            </div>
+                        </div>
+                        <canvas id="mem-chart" height="70"></canvas>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-wrap">
+                    <div class="table-toolbar">
+                        <input class="search-box" id="search" placeholder="ProcessFilter: name_contains, pid..."
+                            oninput="filterTable()" />
+                        <button class="sort-btn" id="sort-cpu-btn" onclick="sortBy('cpu')">CPU ↓</button>
+                        <button class="sort-btn" id="sort-mem-btn" onclick="sortBy('mem')">MEM ↓</button>
+                        <button class="sort-btn" id="sort-pid-btn" onclick="sortBy('pid')">PID</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortBy('pid')" id="th-pid">PID</th>
+                                <th onclick="sortBy('name')" id="th-name">NAME</th>
+                                <th onclick="sortBy('cpu')" id="th-cpu" class="sorted">CPU %</th>
+                                <th onclick="sortBy('mem')" id="th-mem">MEM</th>
+                                <th>VIRT</th>
+                                <th>STATUS</th>
+                                <th>THREADS</th>
+                                <th>PPID</th>
+                                <th>AGE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="proc-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right panel -->
+            <div class="right-panel">
+                <div class="panel-tabs">
+                    <div class="panel-tab active no-select" onclick="switchPanel('detail', this)">Detail</div>
+                    <div class="panel-tab no-select" onclick="switchPanel('events', this)">Events</div>
+                    <div class="panel-tab no-select" onclick="switchPanel('diff', this)">Diff</div>
+                </div>
+                <div class="panel-body" id="panel-body">
+                    <div class="placeholder-msg">
+                        Select a process to inspect its details.<br><br>
+                        <strong>ProcessSpy</strong> provides snapshot(),<br>system_info(), env_vars(), fd_count()<br>and
+                        more.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script>
+        const NAMES = ['systemd', 'kthreadd', 'ksoftirqd', 'rcu_sched', 'migration', 'kworker', 'kdevtmpfs', 'netns', 'kauditd', 'khungtaskd', 'oom_reaper', 'writeback', 'kcompactd0', 'ksmd', 'khugepaged', 'crypto', 'kintegrityd', 'kblockd', 'blkcg_punt_bio', 'tpm_dev_wq', 'md', 'edac-poller', 'devfreq_wq', 'watchdogd', 'kswapd0', 'nfsiod', 'jbd2/sda1', 'ext4-rsv-conver', 'ipv6_addrconf', 'kstrp', 'zswap-shrink', 'charger_manager', 'scsi_eh_0', 'scsi_tmf_0', 'usb-storage', 'kworker/u8', 'ata_sff', 'nvidia-modeset', 'gdm3', 'pulseaudio', 'pipewire', 'wireplumber', 'snapd', 'networkd', 'resolved', 'dbus-daemon', 'avahi-daemon', 'cups-browsed', 'polkitd', 'sshd', 'nginx', 'postgres', 'redis-server', 'mongod', 'dockerd', 'containerd', 'java', 'python3', 'node', 'cargo', 'rustc', 'code', 'chrome', 'firefox', 'bash', 'zsh', 'vim', 'htop', 'top', 'curl', 'wget', 'ls', 'grep', 'find', 'awk', 'sed', 'tar', 'gzip', 'rsync', 'scp', 'ssh', 'git', 'make', 'cmake', 'gcc', 'clang', 'ld', 'ldd', 'strace', 'ltrace', 'perf', 'valgrind', 'gdb', 'lldb'];
+        const CMDS = ['/usr/bin', 'opt/homebrew/bin', '/usr/local/bin', '/bin', '/sbin', '/usr/sbin'];
+        const STATUSES = ['Running', 'Sleeping', 'Sleeping', 'Sleeping', 'Idle', 'Zombie'];
+        const STATUS_W = [8, 45, 45, 45, 5, 2];
+
+        let processes = [];
+        let prevProcesses = [];
+        let selectedPid = null;
+        let currentSort = 'cpu';
+        let currentFilter = 'all';
+        let cpuHistory = new Array(40).fill(0);
+        let memHistory = new Array(40).fill(0);
+        let virtHistory = new Array(40).fill(0);
+        let eventLog = [];
+        let diffState = { spawned: [], exited: [], changed: [] };
+        let spawnCount = 0;
+        let exitCount = 0;
+        let tick = 0;
+        let activePanel = 'detail';
+        let monitorInterval = 2000;
+        let monitorTimer = null;
+        let processHistory = {};
+
+        function weightedRandom(arr, weights) {
+            const total = weights.reduce((a, b) => a + b, 0);
+            let r = Math.random() * total, i = 0;
+            for (; i < weights.length - 1; i++) { r -= weights[i]; if (r <= 0) break; }
+            return arr[i];
+        }
+
+        function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+        function randFloat(a, b, d = 1) { return parseFloat((Math.random() * (b - a) + a).toFixed(d)); }
+
+        function initProcesses() {
+            processes = [];
+            const count = randInt(120, 180);
+            const usedPids = new Set();
+            for (let i = 0; i < count; i++) {
+                const pid = randInt(1, 65535);
+                if (usedPids.has(pid)) { continue; }
+                usedPids.add(pid);
+                const name = NAMES[randInt(0, NAMES.length - 1)];
+                const status = weightedRandom(STATUSES, STATUS_W);
+                const cpu = status === 'Running' ? randFloat(0, 35, 2) : randFloat(0, 1, 2);
+                processes.push({
+                    pid,
+                    parent_pid: i === 0 ? null : (i < 5 ? 1 : processes[randInt(0, Math.min(i - 1, 10))].pid),
+                    name,
+                    exe: CMDS[randInt(0, CMDS.length - 1)] + '/' + name,
+                    cmd: [name, '--config', '/etc/' + name + '.conf'].slice(0, randInt(1, 3)),
+                    status,
+                    cpu_percent: cpu,
+                    memory_bytes: randInt(1, 500) * 1024 * 1024,
+                    virtual_memory_bytes: randInt(10, 2000) * 1024 * 1024,
+                    run_time_secs: randInt(0, 86400 * 3),
+                    threads: randInt(1, 32),
+                    uid: randInt(0, 1000),
+                    gid: randInt(0, 1000),
+                    fd_count: randInt(3, 128),
+                    env_vars: ['PATH=/usr/bin:/bin', 'HOME=/root', 'USER=root', 'LANG=en_US.UTF-8', 'TERM=xterm-256color'],
+                });
+            }
+        }
+
+        function updateProcesses() {
+            prevProcesses = processes.map(p => ({ ...p }));
+
+            const diff = { spawned: [], exited: [], changed: [] };
+
+            // mutate existing
+            processes.forEach(p => {
+                const prev = prevProcesses.find(x => x.pid === p.pid);
+                const oldCpu = p.cpu_percent;
+                const oldMem = p.memory_bytes;
+                const oldStatus = p.status;
+
+                if (p.status === 'Running') {
+                    p.cpu_percent = Math.max(0, Math.min(100, p.cpu_percent + randFloat(-8, 8, 2)));
+                } else {
+                    p.cpu_percent = Math.max(0, Math.min(5, p.cpu_percent + randFloat(-0.3, 0.3, 2)));
+                }
+                p.memory_bytes = Math.max(1024 * 1024, p.memory_bytes + randInt(-2, 2) * 1024 * 1024);
+                p.run_time_secs += monitorInterval / 1000;
+
+                if (Math.random() < 0.01) {
+                    p.status = weightedRandom(STATUSES, STATUS_W);
+                }
+
+                // Check if changed
+                const cpuDelta = p.cpu_percent - oldCpu;
+                const memDelta = p.memory_bytes - oldMem;
+                const statusChanged = p.status !== oldStatus;
+                if (Math.abs(cpuDelta) > 1 || Math.abs(memDelta) > 1024 * 1024 || statusChanged) {
+                    diff.changed.push({ pid: p.pid, name: p.name, cpu_delta: cpuDelta, memory_delta_bytes: memDelta, status_changed: statusChanged, old: { status: oldStatus, cpu_percent: oldCpu }, new: { status: p.status, cpu_percent: p.cpu_percent } });
+                }
+            });
+
+            // chance to exit
+            if (processes.length > 80 && Math.random() < 0.3) {
+                const idx = randInt(5, processes.length - 1);
+                const exited = processes.splice(idx, 1)[0];
+                diff.exited.push(exited);
+                exitCount++;
+                pushEvent('exited', exited.name, `pid ${exited.pid} | ${exited.status}`, exited.pid);
+                markRowFlash(exited.pid, 'exited');
+            }
+
+            // chance to spawn
+            if (Math.random() < 0.4) {
+                const name = NAMES[randInt(0, NAMES.length - 1)];
+                const pid = randInt(10000, 65535);
+                const newProc = {
+                    pid, parent_pid: processes[randInt(0, 4)].pid,
+                    name, exe: CMDS[randInt(0, CMDS.length - 1)] + '/' + name,
+                    cmd: [name], status: 'Running',
+                    cpu_percent: randFloat(0, 20, 2),
+                    memory_bytes: randInt(1, 50) * 1024 * 1024,
+                    virtual_memory_bytes: randInt(50, 200) * 1024 * 1024,
+                    run_time_secs: 0, threads: randInt(1, 8), uid: randInt(0, 1000), gid: randInt(0, 1000),
+                    fd_count: randInt(3, 20),
+                    env_vars: ['PATH=/usr/bin:/bin', 'HOME=/root'],
+                    _new: true
+                };
+                processes.push(newProc);
+                diff.spawned.push(newProc);
+                spawnCount++;
+                pushEvent('spawned', name, `pid ${pid}`, pid);
+                markRowFlash(pid, 'spawned');
+            }
+
+            diff.changed = diff.changed.slice(0, 5);
+            diffState = diff;
+
+            if (diff.changed.length > 0) {
+                pushEvent('diff', `${diff.changed.length} changed`, diff.changed.map(c => `${c.name}(${c.pid})`).join(', '));
+            }
+        }
+
+        function markRowFlash(pid, cls) {
+            setTimeout(() => {
+                const row = document.querySelector(`tr[data-pid="${pid}"]`);
+                if (row) { row.classList.add(cls); setTimeout(() => row.classList.remove(cls), 2100); }
+            }, 50);
+        }
+
+        function pushEvent(type, name, detail, pid = null) {
+            const now = new Date();
+            const t = now.toTimeString().slice(0, 8);
+            eventLog.unshift({ type, name, detail, time: t, pid });
+            if (eventLog.length > 100) eventLog.pop();
+            if (activePanel === 'events') renderEvents();
+            if (activePanel === 'diff') renderDiff();
+        }
+
+        function systemStats() {
+            const totalCpu = processes.reduce((s, p) => s + p.cpu_percent, 0);
+            const totalMem = processes.reduce((s, p) => s + p.memory_bytes, 0);
+            const totalVirt = processes.reduce((s, p) => s + p.virtual_memory_bytes, 0);
+            const totalRam = 32 * 1024 * 1024 * 1024;
+            const cpuPct = Math.min(100, totalCpu / 16).toFixed(1);
+            const memGb = (totalMem / 1024 / 1024 / 1024).toFixed(1);
+            const memPct = Math.min(100, (totalMem / totalRam * 100)).toFixed(1);
+            const swapPct = randFloat(5, 30, 1);
+            return { totalCpu, totalMem, totalVirt, cpuPct, memGb, memPct, swapPct, totalRam };
+        }
+
+        function render() {
+            const stats = systemStats();
+
+            // sidebar gauges
+            el('cpu-pct').textContent = stats.cpuPct + '%';
+            el('cpu-bar').style.width = stats.cpuPct + '%';
+            el('mem-pct').textContent = stats.memPct + '%';
+            el('mem-bar').style.width = stats.memPct + '%';
+            el('swap-pct').textContent = stats.swapPct + '%';
+            el('swap-bar').style.width = stats.swapPct + '%';
+            el('load1').textContent = randFloat(0.5, 4, 2);
+            el('load5').textContent = randFloat(0.3, 3, 2);
+
+            // metrics
+            el('m-procs').textContent = processes.length;
+            el('m-cpu').textContent = stats.totalCpu.toFixed(1) + '%';
+            el('m-mem').textContent = stats.memGb + ' GB';
+            el('m-mem-pct').textContent = stats.memPct + '% of 32 GB';
+            el('m-spawned').textContent = spawnCount;
+            el('m-exited').textContent = exitCount;
+
+            // status counts
+            const counts = { all: processes.length, running: 0, sleeping: 0, zombie: 0, idle: 0 };
+            processes.forEach(p => {
+                const k = p.status.toLowerCase();
+                if (counts[k] !== undefined) counts[k]++;
+            });
+            Object.entries(counts).forEach(([k, v]) => {
+                const el2 = document.getElementById('count-' + k);
+                if (el2) el2.textContent = v;
+            });
+
+            // charts
+            cpuHistory.push(parseFloat(stats.cpuPct));
+            cpuHistory.shift();
+            memHistory.push(parseFloat((stats.totalMem / 1024 / 1024 / 1024).toFixed(2)));
+            memHistory.shift();
+            virtHistory.push(parseFloat((stats.totalVirt / 1024 / 1024 / 1024).toFixed(2)));
+            virtHistory.shift();
+            cpuChart.data.datasets[0].data = [...cpuHistory];
+            cpuChart.update('none');
+            memChart.data.datasets[0].data = [...memHistory];
+            memChart.data.datasets[1].data = [...virtHistory];
+            memChart.update('none');
+
+            // table
+            renderTable();
+
+            // selected process detail
+            if (activePanel === 'detail' && selectedPid) renderDetail(selectedPid);
+
+            tick++;
+        }
+
+        let sortDir = -1;
+        function sortBy(col) {
+            if (currentSort === col) sortDir *= -1;
+            else { currentSort = col; sortDir = -1; }
+            ['pid', 'name', 'cpu', 'mem'].forEach(c => {
+                const th = document.getElementById('th-' + c);
+                if (th) th.classList.toggle('sorted', c === col);
+                const btn = document.getElementById('sort-' + c + '-btn');
+                if (btn) btn.classList.toggle('active', c === col);
+            });
+            renderTable();
+        }
+
+        function setFilter(f, el2) {
+            currentFilter = f;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el2.classList.add('active');
+            renderTable();
+        }
+
+        function filterTable() {
+            renderTable();
+        }
+
+        function renderTable() {
+            const query = document.getElementById('search').value.toLowerCase().trim();
+            let procs = [...processes];
+
+            if (currentFilter !== 'all') {
+                procs = procs.filter(p => p.status.toLowerCase() === currentFilter);
+            }
+            if (query) {
+                procs = procs.filter(p =>
+                    p.name.toLowerCase().includes(query) ||
+                    String(p.pid).includes(query) ||
+                    (query.startsWith('pid:') && String(p.pid) === query.slice(4).trim())
+                );
+            }
+
+            procs.sort((a, b) => {
+                let va, vb;
+                if (currentSort === 'cpu') { va = a.cpu_percent; vb = b.cpu_percent; }
+                else if (currentSort === 'mem') { va = a.memory_bytes; vb = b.memory_bytes; }
+                else if (currentSort === 'pid') { va = a.pid; vb = b.pid; }
+                else if (currentSort === 'name') { va = a.name.toLowerCase(); vb = b.name.toLowerCase(); }
+                if (va < vb) return sortDir;
+                if (va > vb) return -sortDir;
+                return 0;
+            });
+
+            const tbody = document.getElementById('proc-tbody');
+            const fragment = document.createDocumentFragment();
+
+            procs.slice(0, 200).forEach(p => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-pid', p.pid);
+                if (p.pid === selectedPid) tr.classList.add('selected');
+
+                const cpuColor = p.cpu_percent > 50 ? 'var(--red)' : p.cpu_percent > 20 ? 'var(--amber)' : 'var(--accent)';
+                const memMib = (p.memory_bytes / 1024 / 1024).toFixed(0);
+                const virtMib = (p.virtual_memory_bytes / 1024 / 1024).toFixed(0);
+                const age = formatAge(p.run_time_secs);
+                const statusHtml = statusPill(p.status);
+                const cpuBarWidth = Math.min(100, p.cpu_percent);
+
+                tr.innerHTML = `
+      <td class="pid">${p.pid}</td>
+      <td class="name" title="${p.name}">${p.name}</td>
+      <td class="cpu">
+        <span style="color:${cpuColor};display:inline-block;min-width:40px">${p.cpu_percent.toFixed(1)}%</span>
+        <div class="cpu-bar-bg" style="margin-left:4px"><div class="cpu-bar-fill" style="width:${cpuBarWidth}%;background:${cpuColor}"></div></div>
+      </td>
+      <td class="mem">${memMib} MiB</td>
+      <td style="color:var(--text3)">${virtMib} MiB</td>
+      <td class="status-cell">${statusHtml}</td>
+      <td style="color:var(--text3)">${p.threads || '—'}</td>
+      <td class="pid">${p.parent_pid || '—'}</td>
+      <td style="color:var(--text3)">${age}</td>
+    `;
+                tr.addEventListener('click', () => selectProcess(p.pid));
+                fragment.appendChild(tr);
+            });
+
+            tbody.innerHTML = '';
+            tbody.appendChild(fragment);
+        }
+
+        function statusPill(s) {
+            const cls = s.toLowerCase();
+            return `<span class="status-pill ${cls}">${s}</span>`;
+        }
+
+        function formatAge(secs) {
+            if (secs < 60) return secs + 's';
+            if (secs < 3600) return Math.floor(secs / 60) + 'm';
+            if (secs < 86400) return Math.floor(secs / 3600) + 'h';
+            return Math.floor(secs / 86400) + 'd';
+        }
+
+        function selectProcess(pid) {
+            selectedPid = pid;
+            renderTable();
+            if (activePanel !== 'detail') switchPanel('detail', document.querySelector('.panel-tab'));
+            renderDetail(pid);
+        }
+
+        function renderDetail(pid) {
+            const p = processes.find(x => x.pid === pid);
+            if (!p) { el('panel-body').innerHTML = '<div class="placeholder-msg">Process no longer exists.</div>'; return; }
+            if (!processHistory[pid]) processHistory[pid] = { cpu: [], mem: [] };
+            processHistory[pid].cpu.push(p.cpu_percent);
+            processHistory[pid].mem.push(p.memory_bytes / 1024 / 1024);
+            if (processHistory[pid].cpu.length > 20) { processHistory[pid].cpu.shift(); processHistory[pid].mem.shift(); }
+
+            const initials = p.name.slice(0, 2).toUpperCase();
+            const sparkId = 'spark-' + pid;
+
+            el('panel-body').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar">${initials}</div>
+      <div>
+        <div class="detail-name">${p.name}</div>
+        <div class="detail-pid">pid ${p.pid} · ppid ${p.parent_pid || 'none'} · uid ${p.uid}</div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Runtime stats</div>
+      <div class="kv-row"><span class="kv-key">CPU</span><span class="kv-val" style="color:var(--accent)">${p.cpu_percent.toFixed(2)}%</span></div>
+      <div class="kv-row"><span class="kv-key">Memory</span><span class="kv-val">${(p.memory_bytes / 1024 / 1024).toFixed(1)} MiB</span></div>
+      <div class="kv-row"><span class="kv-key">Virtual</span><span class="kv-val">${(p.virtual_memory_bytes / 1024 / 1024).toFixed(1)} MiB</span></div>
+      <div class="kv-row"><span class="kv-key">Threads</span><span class="kv-val">${p.threads}</span></div>
+      <div class="kv-row"><span class="kv-key">FDs</span><span class="kv-val"><span class="fd-badge">${p.fd_count}</span></span></div>
+      <div class="kv-row"><span class="kv-key">Status</span><span class="kv-val">${statusPill(p.status)}</span></div>
+      <div class="kv-row"><span class="kv-key">Age</span><span class="kv-val">${formatAge(p.run_time_secs)}</span></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">CPU trace</div>
+      <canvas id="${sparkId}" height="48"></canvas>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Identity</div>
+      <div class="kv-row"><span class="kv-key">Exe</span><span class="kv-val">${p.exe || '—'}</span></div>
+      <div class="kv-row"><span class="kv-key">UID</span><span class="kv-val">${p.uid}</span></div>
+      <div class="kv-row"><span class="kv-key">GID</span><span class="kv-val">${p.gid}</span></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Command</div>
+      <div class="cmd-chips">${p.cmd.map(c => `<span class="cmd-chip">${c}</span>`).join('')}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Environment</div>
+      <div class="cmd-chips">${p.env_vars.map(e => `<span class="cmd-chip">${e}</span>`).join('')}</div>
+    </div>
+  `;
+
+            const ctx = document.getElementById(sparkId);
+            if (ctx && processHistory[pid].cpu.length > 1) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: processHistory[pid].cpu.map((_, i) => i),
+                        datasets: [{
+                            data: processHistory[pid].cpu,
+                            borderColor: '#4f9cf9',
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            fill: true,
+                            backgroundColor: 'rgba(79,156,249,0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        animation: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false, min: 0, max: Math.max(100, Math.max(...processHistory[pid].cpu) + 5) }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+
+        function renderEvents() {
+            const body = el('panel-body');
+            if (eventLog.length === 0) { body.innerHTML = '<div class="empty-state">No events yet.</div>'; return; }
+            body.innerHTML = `<div class="log-stream">${eventLog.slice(0, 50).map(e => `
+    <div class="log-entry ${e.type}">
+      <span class="log-type-badge ${badgeCls(e.type)}">${e.type}</span>
+      <div class="log-content">
+        <div class="log-proc-name">${e.name}</div>
+        <div class="log-detail">${e.detail}</div>
+      </div>
+      <span class="log-time">${e.time}</span>
+    </div>
+  `).join('')}</div>`;
+        }
+
+        function badgeCls(t) {
+            return { spawned: 'badge-spawn', exited: 'badge-exit', changed: 'badge-change', diff: 'badge-diff' }[t] || 'badge-change';
+        }
+
+        function renderDiff() {
+            const d = diffState;
+            const body = el('panel-body');
+            body.innerHTML = `
+    <div class="diff-section">
+      <div class="diff-heading"><span class="diff-label spawned">Spawned</span><span class="diff-count">${d.spawned.length}</span></div>
+      ${d.spawned.length === 0 ? '<div class="empty-state">none</div>' : d.spawned.map(p => `
+        <div class="diff-row"><span>${p.name}</span><span class="diff-pid">pid ${p.pid}</span></div>
+      `).join('')}
+    </div>
+    <div class="diff-section">
+      <div class="diff-heading"><span class="diff-label exited">Exited</span><span class="diff-count">${d.exited.length}</span></div>
+      ${d.exited.length === 0 ? '<div class="empty-state">none</div>' : d.exited.map(p => `
+        <div class="diff-row"><span>${p.name}</span><span class="diff-pid">pid ${p.pid}</span></div>
+      `).join('')}
+    </div>
+    <div class="diff-section">
+      <div class="diff-heading"><span class="diff-label changed">Changed</span><span class="diff-count">${d.changed.length}</span></div>
+      ${d.changed.length === 0 ? '<div class="empty-state">none</div>' : d.changed.slice(0, 8).map(c => `
+        <div class="diff-row">
+          <span>${c.name}</span>
+          <span class="diff-pid">
+            ${c.status_changed ? `${c.old.status}→${c.new.status} ` : ''} 
+            ${Math.abs(c.cpu_delta) > 1 ? `cpu${c.cpu_delta > 0 ? '+' : ''}${c.cpu_delta.toFixed(1)}% ` : ''} 
+            ${Math.abs(c.memory_delta_bytes) > 1024 * 1024 ? (c.memory_delta_bytes > 0 ? '+' : '') + Math.round(c.memory_delta_bytes / 1024 / 1024) + 'M' : ''}
+          </span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+        }
+
+        function switchPanel(panel, tabEl) {
+            activePanel = panel;
+            document.querySelectorAll('.panel-tab').forEach((t, i) => {
+                t.classList.toggle('active', ['detail', 'events', 'diff'][i] === panel);
+            });
+            if (panel === 'events') renderEvents();
+            else if (panel === 'diff') renderDiff();
+            else if (panel === 'detail' && selectedPid) renderDetail(selectedPid);
+            else if (panel === 'detail') el('panel-body').innerHTML = '<div class="placeholder-msg">Select a process to inspect its details.<br><br><strong>ProcessSpy</strong> provides snapshot(),<br>system_info(), env_vars(), fd_count()<br>and more.</div>';
+        }
+
+        // clock
+        function updateClock() {
+            el('clock').textContent = new Date().toTimeString().slice(0, 8);
+        }
+
+        function updateInterval(v) {
+            monitorInterval = parseInt(v);
+            clearInterval(monitorTimer);
+            monitorTimer = setInterval(() => { updateProcesses(); render(); }, monitorInterval);
+        }
+
+        function el(id) { return document.getElementById(id); }
+
+        // init system info
+        function initSystemInfo() {
+            const osList = ['Linux', 'Linux', 'Linux', 'Ubuntu', 'Debian'];
+            const ver = ['6.8.0-57-generic', '6.6.0-ubuntu', '5.15.0-112', '6.8.9'];
+            const kernels = ['6.8.0-57-generic', '6.6.22', '5.15.0-112'];
+            const hosts = ['ironsight-prod-01', 'blade-runner', 'observer.local', 'sentinel.internal', 'qlinetech-dev'];
+            el('hostname-badge').textContent = hosts[randInt(0, hosts.length - 1)];
+            el('os-name').textContent = osList[randInt(0, 2)];
+            el('os-ver').textContent = ver[randInt(0, 3)];
+            el('total-mem').textContent = '32 GB';
+            el('cpu-count').textContent = '16';
+            el('uptime').textContent = '3d 14h';
+            el('proc-count').textContent = processes.length + ' procs';
+        }
+
+        // chart setup
+        let cpuChart, memChart;
+
+        function initCharts() {
+            const labels = new Array(40).fill('');
+            const baseOpts = {
+                animation: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: { line: { tension: 0.4 } },
+                scales: {
+                    x: { display: false, grid: { display: false } },
+                    y: { display: false }
+                }
+            };
+
+            cpuChart = new Chart(document.getElementById('cpu-chart'), {
+                type: 'line',
+                data: {
+                    labels: [...labels], datasets: [{
+                        data: [...cpuHistory],
+                        borderColor: '#4f9cf9', borderWidth: 1.5,
+                        pointRadius: 0, fill: true,
+                        backgroundColor: 'rgba(79,156,249,0.08)',
+                    }]
+                },
+                options: { ...baseOpts, scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } } }
+            });
+
+            memChart = new Chart(document.getElementById('mem-chart'), {
+                type: 'line',
+                data: {
+                    labels: [...labels], datasets: [
+                        { data: [...memHistory], borderColor: '#3ecf8e', borderWidth: 1.5, pointRadius: 0, fill: false },
+                        { data: [...virtHistory], borderColor: '#a78bfa', borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [3, 3] }
+                    ]
+                },
+                options: { ...baseOpts }
+            });
+        }
+
+        // boot
+        initProcesses();
+        initSystemInfo();
+        initCharts();
+        render();
+        setInterval(updateClock, 1000);
+        updateClock();
+        monitorTimer = setInterval(() => {
+            updateProcesses();
+            render();
+            el('proc-count').textContent = processes.length + ' procs';
+        }, monitorInterval);
+    </script>
+</body>
+
+</html>

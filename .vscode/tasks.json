@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Workspace",
+      "type": "cargo",
+      "command": "build",
+      "args": ["--workspace"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "Build UI",
+      "type": "cargo",
+      "command": "build",
+      "args": ["-p", "ironsight-ui"],
+      "group": "build",
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "Test Workspace",
+      "type": "cargo",
+      "command": "test",
+      "args": ["--workspace"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "Clippy",
+      "type": "cargo",
+      "command": "clippy",
+      "args": ["--workspace", "--", "-D", "warnings"],
+      "group": "test",
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "Docker Up",
+      "type": "shell",
+      "command": "make up",
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Down",
+      "type": "shell",
+      "command": "make down",
+      "problemMatcher": []
+    }
+  ]
+}

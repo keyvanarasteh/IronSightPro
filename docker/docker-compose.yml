@@ -1,0 +1,47 @@
+# IronSight — Privileged Deployment
+#
+# Usage:
+#   docker compose up --build
+#   docker compose up -d          # Detached
+#   docker compose logs -f        # Follow logs
+#
+# IMPORTANT: IronSight needs host PID namespace and elevated capabilities
+# to inspect other processes. This is by design — it's an EDR tool.
+
+services:
+  ironsight:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: ironsight
+    restart: unless-stopped
+
+    # Host PID namespace — see all host processes
+    pid: host
+
+    # Required capabilities for EDR functionality
+    cap_add:
+      - SYS_PTRACE     # Read /proc/<pid>/mem
+      - SYS_ADMIN      # eBPF (future)
+      - NET_ADMIN       # Network socket enumeration
+      - KILL            # Send signals to processes
+
+    # Security opt — allow ptrace
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+
+    # Mount host procfs read-only
+    volumes:
+      - /proc:/host/proc:ro
+      - ./reports:/var/lib/ironsight/reports
+      - ./config.toml:/etc/ironsight/config.toml:ro
+
+    environment:
+      - RUST_LOG=ironsight=info
+      - IRONSIGHT_REPORT_DIR=/var/lib/ironsight/reports
+
+    # Run as root for full EDR capabilities
+    user: root
+
+    command: ["--top", "20"]

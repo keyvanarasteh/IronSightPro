@@ -1,0 +1,15 @@
+target
+logs
+Config.toml
+.env
+assets/infographic-templates/Rapid Code Visualization.html
+backups
+# DS_Store
+.DS_Store
+.cargo
+.cargo/*
+tdlib_db
+tdlib_db/*
+features/web-analyzer
+tools.db-shm
+tools.db-wal

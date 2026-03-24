@@ -1,0 +1,12 @@
+[package]
+name = "ironsight-heuristic"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Heuristic threat scoring engine — weighted signals, decay, risk aggregation"
+
+[dependencies]
+ironsight-core.workspace = true
+serde.workspace = true
+tracing.workspace = true

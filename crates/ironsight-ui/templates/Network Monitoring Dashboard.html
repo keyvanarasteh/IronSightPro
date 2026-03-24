@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronSight | Network Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+            color: #fafafa;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .glass-card {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(63, 63, 70, 0.5);
+            border-radius: 0.75rem;
+        }
+
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .3;
+            }
+        }
+
+        .audit-flag {
+            border-left: 4px solid #ef4444;
+            background: linear-gradient(to right, rgba(239, 68, 68, 0.1), transparent);
+        }
+
+        .scan-line {
+            height: 2px;
+            background: #10b981;
+            position: absolute;
+            width: 100%;
+            z-index: 50;
+            top: 0;
+            animation: scan 3s linear infinite;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+</head>
+
+<body class="overflow-x-hidden">
+
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-0 h-full w-64 bg-zinc-950 border-r border-zinc-800 hidden lg:flex flex-col z-40">
+        <div class="p-6 border-b border-zinc-800">
+            <div class="flex items-center gap-3 text-emerald-500">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+                <span class="text-xl font-bold tracking-tighter text-zinc-100">IRONSIGHT</span>
+            </div>
+            <p class="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest font-semibold">Network Intelligence</p>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onclick="switchTab('overview')"
+                class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-zinc-900 text-zinc-100 hover:bg-zinc-800 transition-all">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Overview
+            </button>
+            <button onclick="switchTab('listeners')"
+                class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-all">
+                <i data-lucide="radio" class="w-5 h-5"></i> Active Listeners
+            </button>
+            <button onclick="switchTab('external')"
+                class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-all">
+                <i data-lucide="globe" class="w-5 h-5"></i> External Traffic
+            </button>
+            <button onclick="switchTab('audit')"
+                class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-all">
+                <i data-lucide="search" class="w-5 h-5"></i> Audit Flags
+                <span id="flag-count-badge"
+                    class="ml-auto bg-red-500/20 text-red-500 px-2 py-0.5 rounded-full text-[10px] font-bold">0</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-zinc-800">
+            <div class="bg-zinc-900/50 p-3 rounded-lg border border-zinc-800">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 status-pulse"></span>
+                    <span class="text-xs font-medium text-zinc-400 uppercase tracking-tighter">System Scan Active</span>
+                </div>
+                <p class="text-[10px] text-zinc-500 leading-relaxed">Monitoring /proc/net on Linux node 01. Inode-to-PID
+                    mapping enabled.</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 min-h-screen relative p-4 md:p-8">
+        <div id="scan-progress" class="scan-line hidden"></div>
+
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 id="page-title" class="text-2xl font-bold text-zinc-100">Security Overview</h1>
+                <p class="text-sm text-zinc-500" id="last-scanned">Last comprehensive scan: <span class="mono">Just
+                        now</span></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="relative group">
+                    <input type="text" id="search-input" placeholder="Search PID or Host..."
+                        class="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64 transition-all">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-zinc-500"></i>
+                </div>
+                <button onclick="triggerScan()"
+                    class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i> Scan Now
+                </button>
+            </div>
+        </header>
+
+        <!-- Tab: Overview -->
+        <section id="tab-overview" class="tab-content space-y-6">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-card p-6 flex items-center gap-4">
+                    <div class="p-3 bg-zinc-900 rounded-xl border border-zinc-800">
+                        <i data-lucide="network" class="w-6 h-6 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-zinc-500 uppercase tracking-wider font-bold">Total Sockets</p>
+                        <h3 id="stat-total" class="text-2xl font-bold mono tracking-tighter">--</h3>
+                    </div>
+                </div>
+                <div class="glass-card p-6 flex items-center gap-4">
+                    <div class="p-3 bg-zinc-900 rounded-xl border border-zinc-800">
+                        <i data-lucide="radio" class="w-6 h-6 text-blue-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-zinc-500 uppercase tracking-wider font-bold">Listeners</p>
+                        <h3 id="stat-listeners" class="text-2xl font-bold mono tracking-tighter">--</h3>
+                    </div>
+                </div>
+                <div class="glass-card p-6 flex items-center gap-4">
+                    <div class="p-3 bg-zinc-900 rounded-xl border border-zinc-800">
+                        <i data-lucide="globe" class="w-6 h-6 text-purple-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-zinc-500 uppercase tracking-wider font-bold">External IPs</p>
+                        <h3 id="stat-external" class="text-2xl font-bold mono tracking-tighter">--</h3>
+                    </div>
+                </div>
+                <div class="glass-card p-6 flex items-center gap-4 border-red-900/30">
+                    <div class="p-3 bg-red-950/20 rounded-xl border border-red-900/30">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-zinc-500 uppercase tracking-wider font-bold">Audit Flags</p>
+                        <h3 id="stat-flags" class="text-2xl font-bold mono tracking-tighter text-red-500">--</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-6 col-span-2">
+                    <h4 class="text-sm font-bold text-zinc-400 mb-6 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i> Network Activity Volume
+                    </h4>
+                    <div class="h-64 relative">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6">
+                    <h4 class="text-sm font-bold text-zinc-400 mb-6 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i> Protocol Dist.
+                    </h4>
+                    <div class="h-64 relative">
+                        <canvas id="protocolChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Feed -->
+            <div class="glass-card overflow-hidden">
+                <div class="p-4 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
+                    <h4 class="text-xs font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-red-500"></i> Critical Security Flags
+                    </h4>
+                    <span class="text-[10px] text-zinc-500">Updates live from DNS enrichment</span>
+                </div>
+                <div id="audit-feed-overview" class="divide-y divide-zinc-800 max-h-80 overflow-y-auto">
+                    <!-- Feed items injected here -->
+                    <div class="p-8 text-center text-zinc-600">No security flags detected in last scan.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Listeners -->
+        <section id="tab-listeners" class="tab-content hidden space-y-6">
+            <div class="glass-card">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead
+                            class="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest border-b border-zinc-800">
+                            <tr>
+                                <th class="px-6 py-4">Process</th>
+                                <th class="px-6 py-4">PID</th>
+                                <th class="px-6 py-4">Local Port</th>
+                                <th class="px-6 py-4">Protocol</th>
+                                <th class="px-6 py-4">Bind Address</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listeners-table-body" class="text-sm divide-y divide-zinc-800/50">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: External Connections -->
+        <section id="tab-external" class="tab-content hidden space-y-6">
+            <div class="glass-card">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead
+                            class="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest border-b border-zinc-800">
+                            <tr>
+                                <th class="px-6 py-4">Destination Host</th>
+                                <th class="px-6 py-4">IP Address</th>
+                                <th class="px-6 py-4">Remote Port</th>
+                                <th class="px-6 py-4">PID</th>
+                                <th class="px-6 py-4">Process</th>
+                                <th class="px-6 py-4">State</th>
+                            </tr>
+                        </thead>
+                        <tbody id="external-table-body" class="text-sm divide-y divide-zinc-800/50">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Audit -->
+        <section id="tab-audit" class="tab-content hidden space-y-6">
+            <div id="audit-detail-list" class="space-y-4">
+                <!-- Large Audit cards -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for Process Details -->
+    <div id="process-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-2xl bg-zinc-900 border-zinc-700 shadow-2xl">
+            <div class="p-6 border-b border-zinc-800 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-emerald-500/10 rounded-lg">
+                        <i data-lucide="cpu" class="w-6 h-6 text-emerald-500"></i>
+                    </div>
+                    <div>
+                        <h2 id="modal-proc-name" class="text-xl font-bold">Process Detail</h2>
+                        <p id="modal-proc-pid" class="text-xs text-zinc-500 mono">PID: 0000</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="text-zinc-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+                        <span class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Total Sockets</span>
+                        <span id="modal-sock-count" class="text-lg font-bold mono">--</span>
+                    </div>
+                    <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+                        <span class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">State</span>
+                        <span class="text-lg font-bold text-emerald-500">Active</span>
+                    </div>
+                    <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+                        <span class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Risk Score</span>
+                        <span id="modal-risk-score" class="text-lg font-bold text-zinc-300">0.0</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-bold text-zinc-400 mb-3 uppercase">Related Connections</h4>
+                    <div id="modal-conns" class="space-y-2 max-h-48 overflow-y-auto">
+                        <!-- Conn items -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Mock Data & Logic for IronSight ---
+
+        let currentAudit = null;
+        let activityChart = null;
+        let protocolChart = null;
+
+        const portIntelMap = {
+            4444: { service: "Metasploit", risk: "Critical", note: "Common reverse shell port" },
+            5555: { service: "Android ADB", risk: "Warning", note: "Remote debug bridge exposed" },
+            1337: { service: "Elite/Leet Backdoor", risk: "High", note: "Classic backdoor convention" },
+            31337: { service: "Back Orifice", risk: "Critical", note: "Legacy trojan activity detected" },
+            6667: { service: "IRC C2", risk: "High", note: "Anomalous IRC traffic (potential Botnet)" },
+            9001: { service: "Tor Relay", risk: "Warning", note: "Anonymization proxy active" },
+            8443: { service: "Alt HTTPS C2", risk: "High", note: "Encrypted traffic on non-standard port" }
+        };
+
+        // Simulated Scan
+        function generateAudit() {
+            const listeners = [
+                { port: 80, protocol: 'Tcp', pid: 1042, process_name: 'nginx', bind_address: '0.0.0.0' },
+                { port: 443, protocol: 'Tcp', pid: 1042, process_name: 'nginx', bind_address: '0.0.0.0' },
+                { port: 22, protocol: 'Tcp', pid: 821, process_name: 'sshd', bind_address: '0.0.0.0' },
+                { port: 53, protocol: 'Udp', pid: 412, process_name: 'systemd-resolved', bind_address: '127.0.0.53' },
+                { port: 9001, protocol: 'Tcp', pid: 5521, process_name: 'tor', bind_address: '0.0.0.0' },
+                { port: 1337, protocol: 'Tcp', pid: 9999, process_name: 'python3', bind_address: '0.0.0.0' }
+            ];
+
+            const external = [
+                { socket: { protocol: 'Tcp', local_port: 54221, remote_addr: '142.250.190.46', remote_port: 443, state: 'Established', pid: 4210, process_name: 'chrome' }, dns: { hostname: 'google.com', ip: '142.250.190.46' } },
+                { socket: { protocol: 'Tcp', local_port: 54332, remote_addr: '185.199.108.153', remote_port: 443, state: 'Established', pid: 3122, process_name: 'git' }, dns: { hostname: 'github.com', ip: '185.199.108.153' } },
+                { socket: { protocol: 'Tcp', local_port: 33211, remote_addr: '45.33.32.156', remote_port: 4444, state: 'Established', pid: 9999, process_name: 'python3' }, dns: { hostname: 'unknown-c2.org', ip: '45.33.32.156' } },
+                { socket: { protocol: 'Tcp', local_port: 41001, remote_addr: '52.12.33.11', remote_port: 443, state: 'Established', pid: 2110, process_name: 'aws-cli' }, dns: { hostname: 'ec2-52-12-33-11.aws.com', ip: '52.12.33.11' } }
+            ];
+
+            const suspicious = external.filter(e => portIntelMap[e.socket.remote_port])
+                .concat(listeners.filter(l => portIntelMap[l.port]).map(l => ({ socket: { ...l, remote_port: l.port }, intel: portIntelMap[l.port] })));
+
+            const flags = suspicious.map(s => {
+                const intel = portIntelMap[s.socket.remote_port];
+                return `Flag: ${intel.service} (${intel.risk}) on port ${s.socket.remote_port} - ${intel.note}`;
+            });
+
+            return {
+                total_sockets: listeners.length + external.length + 42,
+                listeners,
+                external_connections: external,
+                suspicious_connections: suspicious,
+                flag_count: flags.length,
+                flags
+            };
+        }
+
+        // --- Render UI ---
+
+        function renderDashboard(audit) {
+            currentAudit = audit;
+
+            // Stats
+            document.getElementById('stat-total').innerText = audit.total_sockets;
+            document.getElementById('stat-listeners').innerText = audit.listeners.length;
+            document.getElementById('stat-external').innerText = audit.external_connections.length;
+            document.getElementById('stat-flags').innerText = audit.flag_count;
+            document.getElementById('flag-count-badge').innerText = audit.flag_count;
+
+            // Overview Feed
+            const feed = document.getElementById('audit-feed-overview');
+            feed.innerHTML = '';
+            if (audit.suspicious_connections.length === 0) {
+                feed.innerHTML = '<div class="p-8 text-center text-zinc-600">No security flags detected.</div>';
+            } else {
+                audit.suspicious_connections.forEach(s => {
+                    const intel = s.intel || portIntelMap[s.socket.remote_port];
+                    const div = document.createElement('div');
+                    div.className = 'p-4 flex items-center gap-4 hover:bg-zinc-800/50 transition-colors cursor-pointer audit-flag';
+                    div.innerHTML = `
+                        <div class="p-2 bg-red-900/20 rounded-lg">
+                            <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <h5 class="text-sm font-bold text-zinc-100">${intel.service} Detected</h5>
+                                <span class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold uppercase">${intel.risk}</span>
+                            </div>
+                            <p class="text-xs text-zinc-500 mt-0.5">${intel.note} • PID ${s.socket.pid || '?'}</p>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-700"></i>
+                    `;
+                    div.onclick = () => switchTab('audit');
+                    feed.appendChild(div);
+                });
+            }
+
+            // Listeners Table
+            const lTable = document.getElementById('listeners-table-body');
+            lTable.innerHTML = '';
+            audit.listeners.forEach(l => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-zinc-900/40 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-semibold text-zinc-100">${l.process_name}</td>
+                    <td class="px-6 py-4 mono text-zinc-400 text-xs">${l.pid}</td>
+                    <td class="px-6 py-4 font-bold text-emerald-500">${l.port}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-0.5 bg-zinc-800 rounded text-[10px] font-bold">${l.protocol}</span></td>
+                    <td class="px-6 py-4 text-zinc-400 mono text-xs">${l.bind_address}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="showProcess(${l.pid})" class="text-zinc-500 hover:text-white"><i data-lucide="external-link" class="w-4 h-4"></i></button>
+                    </td>
+                `;
+                lTable.appendChild(row);
+            });
+
+            // External Table
+            const eTable = document.getElementById('external-table-body');
+            eTable.innerHTML = '';
+            audit.external_connections.forEach(e => {
+                const row = document.createElement('tr');
+                const isSuspicious = portIntelMap[e.socket.remote_port];
+                row.className = `hover:bg-zinc-900/40 transition-colors ${isSuspicious ? 'bg-red-500/5' : ''}`;
+                row.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="text-zinc-100 font-medium">${e.dns.hostname || 'Unknown'}</div>
+                    </td>
+                    <td class="px-6 py-4 mono text-xs text-zinc-400">${e.dns.ip}</td>
+                    <td class="px-6 py-4 font-bold ${isSuspicious ? 'text-red-500' : 'text-zinc-300'}">${e.socket.remote_port}</td>
+                    <td class="px-6 py-4 mono text-xs text-zinc-500">${e.socket.pid}</td>
+                    <td class="px-6 py-4 text-zinc-300">${e.socket.process_name}</td>
+                    <td class="px-6 py-4">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            ${e.socket.state}
+                        </span>
+                    </td>
+                `;
+                eTable.appendChild(row);
+            });
+
+            // Audit Detail
+            const aDetail = document.getElementById('audit-detail-list');
+            aDetail.innerHTML = '';
+            audit.suspicious_connections.forEach(s => {
+                const intel = s.intel || portIntelMap[s.socket.remote_port];
+                const card = document.createElement('div');
+                card.className = 'glass-card p-6 border-l-4 border-red-500';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-red-500 mb-1 block">Security Advisory</span>
+                            <h3 class="text-xl font-bold">${intel.service} Hook</h3>
+                        </div>
+                        <span class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">${intel.risk} Risk</span>
+                    </div>
+                    <p class="text-zinc-400 mb-6 text-sm">${intel.note}. This connection is managed by <b>${s.socket.process_name || 'unknown process'}</b> (PID ${s.socket.pid}).</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-zinc-950 p-3 rounded">
+                            <span class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Local Port</span>
+                            <span class="mono text-sm">${s.socket.local_port || s.socket.port}</span>
+                        </div>
+                        <div class="bg-zinc-950 p-3 rounded">
+                            <span class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Remote Port</span>
+                            <span class="mono text-sm text-red-400 font-bold">${s.socket.remote_port}</span>
+                        </div>
+                        <div class="bg-zinc-950 p-3 rounded">
+                            <span class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Protocol</span>
+                            <span class="mono text-sm">${s.socket.protocol}</span>
+                        </div>
+                        <div class="bg-zinc-950 p-3 rounded">
+                            <span class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Process Inode</span>
+                            <span class="mono text-sm">${s.socket.inode || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="showProcess(${s.socket.pid})" class="bg-zinc-100 text-zinc-950 px-4 py-2 rounded text-xs font-bold hover:bg-white transition-colors">Inspect Process</button>
+                        <button class="bg-zinc-800 text-zinc-100 px-4 py-2 rounded text-xs font-bold hover:bg-zinc-700 transition-colors">Mark as False Positive</button>
+                    </div>
+                `;
+                aDetail.appendChild(card);
+            });
+
+            updateCharts(audit);
+            lucide.createIcons();
+        }
+
+        function updateCharts(audit) {
+            const ctx1 = document.getElementById('activityChart').getContext('2d');
+            if (activityChart) activityChart.destroy();
+            activityChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['-60s', '-50s', '-40s', '-30s', '-20s', '-10s', 'Now'],
+                    datasets: [{
+                        label: 'Sockets',
+                        data: [45, 42, 48, 52, 49, 55, audit.total_sockets],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { display: false },
+                        x: { grid: { display: false }, ticks: { color: '#71717a', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('protocolChart').getContext('2d');
+            if (protocolChart) protocolChart.destroy();
+            protocolChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['TCP', 'UDP'],
+                    datasets: [{
+                        data: [audit.listeners.filter(l => l.protocol === 'Tcp').length + audit.external_connections.length, 5],
+                        backgroundColor: ['#3b82f6', '#10b981'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '80%',
+                    plugins: { legend: { position: 'bottom', labels: { color: '#fafafa', font: { size: 10 } } } }
+                }
+            });
+        }
+
+        // --- Interaction Logic ---
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-zinc-900', 'text-zinc-100');
+                btn.classList.add('text-zinc-400');
+            });
+            event.currentTarget.classList.add('bg-zinc-900', 'text-zinc-100');
+            event.currentTarget.classList.remove('text-zinc-400');
+
+            const titleMap = {
+                'overview': 'Security Overview',
+                'listeners': 'Active Listeners',
+                'external': 'External Traffic',
+                'audit': 'Security Audit Logs'
+            };
+            document.getElementById('page-title').innerText = titleMap[tabId];
+        }
+
+        function triggerScan() {
+            const btn = event.currentTarget;
+            const icon = document.getElementById('refresh-icon');
+            const scanner = document.getElementById('scan-progress');
+
+            btn.disabled = true;
+            icon.classList.add('animate-spin');
+            scanner.classList.remove('hidden');
+
+            setTimeout(() => {
+                const newAudit = generateAudit();
+                renderDashboard(newAudit);
+                btn.disabled = false;
+                icon.classList.remove('animate-spin');
+                scanner.classList.add('hidden');
+                document.getElementById('last-scanned').innerHTML = `Last comprehensive scan: <span class="mono">${new Date().toLocaleTimeString()}</span>`;
+            }, 1200);
+        }
+
+        function showProcess(pid) {
+            const modal = document.getElementById('process-modal');
+            const proc = currentAudit.listeners.find(l => l.pid === pid) ||
+                currentAudit.external_connections.find(e => e.socket.pid === pid)?.socket;
+
+            if (!proc) return;
+
+            document.getElementById('modal-proc-name').innerText = proc.process_name || 'System Process';
+            document.getElementById('modal-proc-pid').innerText = `PID: ${pid}`;
+            document.getElementById('modal-sock-count').innerText = Math.floor(Math.random() * 10) + 1;
+            document.getElementById('modal-risk-score').innerText = portIntelMap[proc.port || proc.remote_port] ? '8.4 (High)' : '0.2 (Safe)';
+            document.getElementById('modal-risk-score').className = portIntelMap[proc.port || proc.remote_port] ? 'text-lg font-bold text-red-500' : 'text-lg font-bold text-emerald-500';
+
+            const connList = document.getElementById('modal-conns');
+            connList.innerHTML = `
+                <div class="p-3 bg-zinc-950/50 border border-zinc-800 rounded flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span class="mono text-xs text-zinc-300">Port ${proc.port || proc.remote_port}</span>
+                    </div>
+                    <span class="text-[10px] text-zinc-500 uppercase tracking-widest">${proc.state || 'Listen'}</span>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('process-modal').classList.add('hidden');
+        }
+
+        // Initialize
+        window.onload = () => {
+            lucide.createIcons();
+            renderDashboard(generateAudit());
+
+            // Handle search
+            document.getElementById('search-input').onkeyup = function () {
+                const q = this.value.toLowerCase();
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+                });
+            };
+        };
+    </script>
+</body>
+
+</html>

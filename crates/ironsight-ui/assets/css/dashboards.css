@@ -1,0 +1,307 @@
+/* ── Dashboard Theme Variables ── */
+:root {
+    --surface-bg: #1a1a2e;
+    --panel-bg: #16213e;
+    --glass-bg: rgba(15, 23, 42, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --overlay-bg: rgba(0, 0, 0, 0.3);
+    --overlay-deep: rgba(0, 0, 0, 0.15);
+    --row-hover: rgba(255, 255, 255, 0.03);
+    --table-header-bg: rgba(0, 0, 0, 0.3);
+    --feed-bg: rgba(0, 0, 0, 0.2);
+    --code-bg: rgba(0, 0, 0, 0.3);
+    --badge-info-bg: rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="light"] {
+    --surface-bg: #f8f9fb;
+    --panel-bg: #ffffff;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --overlay-bg: rgba(0, 0, 0, 0.04);
+    --overlay-deep: rgba(0, 0, 0, 0.03);
+    --row-hover: rgba(0, 0, 0, 0.03);
+    --table-header-bg: rgba(0, 0, 0, 0.04);
+    --feed-bg: rgba(0, 0, 0, 0.02);
+    --code-bg: rgba(0, 0, 0, 0.04);
+    --badge-info-bg: rgba(99, 102, 241, 0.08);
+}
+
+/* ── Dashboard Layout ── */
+.dash-page .main-content {
+    display: block;
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* ── Responsive Grid Helpers ── */
+.dash-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.dash-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.dash-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 16px;
+}
+
+.dash-grid-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+}
+
+.dash-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dash-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Responsive Breakpoints ── */
+@media (max-width: 1200px) {
+    .dash-grid-3 {
+        grid-template-columns: 1fr 1fr;
+    }
+    .dash-grid-3 > *:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 960px) {
+    .dash-grid-2,
+    .dash-grid-sidebar {
+        grid-template-columns: 1fr;
+    }
+    .dash-grid-3 {
+        grid-template-columns: 1fr;
+    }
+    .dash-grid-3 > *:nth-child(3) {
+        grid-column: auto;
+    }
+    .dash-stats-row {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .dash-page .main-content {
+        padding: 12px;
+    }
+    .dash-stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+}
+
+/* ── Component Theme Styles ── */
+
+/* Stat Card */
+.dash-stat-card {
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    transition: all 0.3s ease;
+}
+.dash-stat-card:hover {
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+}
+
+/* Glass Panel */
+.glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+}
+[data-theme="light"] .glass-panel {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* Data Table */
+.dash-table-wrap {
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.dash-table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.dash-table-wrap thead {
+    background: var(--table-header-bg);
+}
+.dash-table-wrap th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.dash-table-wrap td {
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.dash-table-wrap tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+}
+.dash-table-wrap tbody tr:hover {
+    background: var(--row-hover);
+}
+
+/* Log Feed */
+.log-feed-panel {
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.log-feed-body {
+    background: var(--feed-bg);
+}
+
+/* Alert List */
+.alert-list-panel {
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Scanner Results */
+.scanner-results-panel {
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Memory Map */
+.memory-map-panel {
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+/* Metadata Section */
+.meta-section {
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+/* Change Feed Item */
+.change-feed-item {
+    border: 1px solid var(--border);
+    background: var(--overlay-deep);
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+/* Timeline */
+.timeline-step-body {
+    background: var(--overlay-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.timeline-connector {
+    background: var(--border);
+}
+
+/* Code blocks inside panels */
+.dash-code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    word-break: break-all;
+}
+
+/* Pulse animation for status dots */
+@keyframes dash-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Tab buttons */
+.dash-tab-btn {
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+}
+.dash-tab-btn:hover {
+    color: var(--text-primary);
+}
+.dash-tab-btn.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+}
+
+/* Policy chip tags */
+.policy-chip {
+    padding: 4px 8px;
+    background: var(--surface-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+/* Threshold row */
+.threshold-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: var(--overlay-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+/* Info block */
+.dash-info-block {
+    padding: 14px;
+    background: var(--badge-info-bg);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 10px;
+}

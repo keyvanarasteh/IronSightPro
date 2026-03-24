@@ -1,0 +1,32 @@
+[package]
+name = "ironsight-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Service orchestrator — tokio event loop, config, privilege escalation, watchdog"
+
+[[bin]]
+name = "ironsight"
+path = "src/main.rs"
+
+[dependencies]
+ironsight-core.workspace = true
+ironsight-security.workspace = true
+ironsight-network.workspace = true
+ironsight-memory.workspace = true
+ironsight-kernel.workspace = true
+ironsight-heuristic.workspace = true
+ironsight-response.workspace = true
+ironsight-report.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sysinfo.workspace = true
+toml.workspace = true
+nix.workspace = true
+chrono.workspace = true
+thiserror.workspace = true

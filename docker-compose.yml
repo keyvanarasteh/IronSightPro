@@ -1,0 +1,139 @@
+# ============================================
+# IronSight EDR — Docker Compose
+# ============================================
+# Services:
+#   ironsight  — Ana EDR tarayıcı
+#   sentinel   — Watchdog nöbetçi
+#   dashboard  — Web dashboard (future)
+# ============================================
+
+services:
+  # ── Ana IronSight Tarayıcı ──────────────────
+  ironsight:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ironsight-scanner
+    restart: unless-stopped
+    privileged: false
+    cap_add:
+      - SYS_PTRACE      # /proc/PID/mem okuma, process attach
+      - KILL             # SIGSTOP, SIGKILL gönderme
+      - NET_RAW          # Ham ağ erişimi
+      - DAC_READ_SEARCH  # Dosya okuma (tüm kullanıcılar)
+    security_opt:
+      - no-new-privileges:true
+    pid: "host"          # Host process'lerini görmek için
+    network_mode: "host" # Host ağ socket'larını görmek için
+    volumes:
+      - ./config/ironsight.toml:/etc/ironsight/config.toml:ro
+      - ironsight-reports:/var/lib/ironsight/reports
+      - ironsight-dumps:/var/lib/ironsight/dumps
+      - ironsight-logs:/var/log/ironsight
+      # Host /proc erişimi (okuma)
+      - /proc:/host/proc:ro
+    environment:
+      - IRONSIGHT_CONFIG=/etc/ironsight/config.toml
+      - IRONSIGHT_LOG_LEVEL=info
+      - RUST_LOG=ironsight=info
+      - IRONSIGHT_PROC_ROOT=/host/proc
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "ironsight"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "2.0"
+        reservations:
+          memory: 128M
+          cpus: "0.5"
+
+  # ── Watchdog Sentinel ───────────────────────
+  sentinel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ironsight-sentinel
+    restart: always
+    entrypoint: ["/opt/ironsight/bin/ironsight", "--sentinel"]
+    depends_on:
+      ironsight:
+        condition: service_healthy
+    pid: "host"
+    volumes:
+      - ironsight-logs:/var/log/ironsight
+    environment:
+      - IRONSIGHT_WATCH_TARGET=ironsight-scanner
+      - IRONSIGHT_HEARTBEAT_INTERVAL=10
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.25"
+
+  # ── Grafana (Monitoring Dashboard) ──────────
+  grafana:
+    image: grafana/grafana:11-oss
+    container_name: ironsight-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-ironsight}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    profiles:
+      - monitoring
+
+  # ── Loki (Log Aggregation) ──────────────────
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: ironsight-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    profiles:
+      - monitoring
+
+  # ── Promtail (Log Shipper) ──────────────────
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: ironsight-promtail
+    restart: unless-stopped
+    volumes:
+      - ironsight-logs:/var/log/ironsight:ro
+      - ./docker/promtail/config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    profiles:
+      - monitoring
+
+volumes:
+  ironsight-reports:
+    driver: local
+  ironsight-dumps:
+    driver: local
+  ironsight-logs:
+    driver: local
+  grafana-data:
+    driver: local
+  loki-data:
+    driver: local

@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "EDR Service",
+      "cargo": {
+        "args": ["build", "--package=ironsight-service", "--bin=ironsight-service"],
+        "filter": { "name": "ironsight-service", "kind": "bin" }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": { "RUST_LOG": "debug" }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Desktop UI",
+      "cargo": {
+        "args": ["build", "--package=ironsight-ui", "--bin=ironsight-ui"],
+        "filter": { "name": "ironsight-ui", "kind": "bin" }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": { "RUST_LOG": "info" }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Tests (workspace)",
+      "cargo": {
+        "args": ["test", "--workspace", "--no-run"],
+        "filter": { "kind": "test" }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+# IronSight — Default Configuration
+# Copy to ./ironsight.toml, /etc/ironsight/config.toml, or ~/.config/ironsight/config.toml
+
+[general]
+interval_secs = 5          # Scan interval (seconds)
+log_level = "info"         # trace, debug, info, warn, error
+report_dir = "/tmp/ironsight-reports"
+color = true
+
+[scan]
+max_processes = 0          # 0 = unlimited
+network = true             # Enable network analysis
+memory = true              # Enable memory analysis
+security = true            # Enable security analysis (hash, entropy, signature)
+top_n = 10                 # Top N threats to display
+
+[thresholds]
+entropy_alert = 7.0        # Entropy threshold (0.0–8.0)
+cpu_spike = 90.0           # CPU% spike detection
+export_min_score = 30.0    # Minimum threat score for JSON export
+auto_response = false      # Automatic suspend/kill for Critical threats
+
+[exclusions]
+names = ["systemd", "init", "sshd", "dbus-daemon", "cron", "kthreadd"]
+paths = ["/usr/lib/systemd/", "/usr/sbin/"]
+pids = [1]
+
+[report]
+min_level = "Medium"       # Export reports for: Clean, Low, Medium, High, Critical
+pretty = true              # Pretty-print JSON (false = compact/SIEM-ready)
+
+[watchdog]
+enabled = false            # Enable peer watchdog
+interval_secs = 10         # Watchdog check interval
+auto_restart = true        # Auto-restart on peer death

@@ -1,0 +1,36 @@
+{
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.check.extraArgs": ["--workspace"],
+  "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.diagnostics.experimental.enable": true,
+  "rust-analyzer.linkedProjects": ["Cargo.toml"],
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "rust-lang.rust-analyzer",
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4
+  },
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  },
+  "[css]": {
+    "editor.tabSize": 2
+  },
+  "[html]": {
+    "editor.tabSize": 2
+  },
+  "files.exclude": {
+    "target": true,
+    "**/.DS_Store": true
+  },
+  "files.watcherExclude": {
+    "target/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "target": true,
+    "Cargo.lock": true
+  }
+}
