@@ -1,60 +1,129 @@
 :root {
-    /* ── VSCode Modern Dark Theme (DevOps Style) ── */
-    --bg-primary: #181818;
-    --bg-secondary: #1e1e1e;
-    --bg-card: #252526;
-    --bg-hover: #2a2d2e;
-    --border: #333333;
-    --text-primary: #cccccc;
-    --text-secondary: #999999;
-    --text-muted: #6c6c6c;
-    --shadow-card: none; /* VSCode is very flat */
-
-    /* ── Sidebar Variables ── */
-    --sidebar-background: var(--primary-color-2);
-    --sidebar-foreground: var(--secondary-color-4);
-    --sidebar-border: var(--primary-color-6);
-    --sidebar-accent: var(--primary-color-4);
-    --sidebar-accent-foreground: var(--secondary-color-4);
-    --sidebar-ring: var(--primary-color-7);
-
-    /* Accent colors (shared across themes) */
-    --accent-green: #89d185;
-    --accent-red: #f14c4c;
-    --accent-orange: #d18616;
-    --accent-yellow: #cca700;
-    --accent-blue: #3794ff;
-    --accent-cyan: #29b8db;
-    --accent-purple: #c586c0;
-    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    /* ── Layout & Typography ── */
+    --radius: 0.625rem;
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
     --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+    /* ── VSCode Modern Dark Theme (Default in IronSight) ── */
+    --foreground: #cccccc;
+    --foreground-bright: #ffffff;
+    --foreground-muted: #9d9d9d;
+    --foreground-subtle: #989898;
+    --error-fg: #f85149;
+    --icon-fg: #cccccc;
+
+    --background: #1f1f1f;
+    --card: #1f1f1f;
+    --card-foreground: #cccccc;
+    --background-elevated: #313131;
+    --background-hover: #2a2d2e;
+    --background-selected: #37373d;
+    --background-panel: #181818;
+
+    --primary: #0078d4;
+    --primary-hover: #026ec1;
+    --primary-foreground: #ffffff;
+
+    --secondary: #313131;
+    --secondary-foreground: #cccccc;
+
+    --muted: #2a2d2e;
+    --muted-foreground: #9d9d9d;
+
+    --accent: #37373d;
+    --accent-foreground: #ffffff;
+
+    --success: #2ea043;
+    --warning: #d29922;
+    --info: #4daafc;
+    --destructive: #f85149;
+
+    --ring: #0078d4;
+    --border: #3c3c3c;
+    --border-subtle: #454545;
+
+    --toggle-active: rgba(36, 137, 219, 0.51);
+    --hover-overlay: rgba(90, 93, 94, 0.31);
+    --shadow: rgba(0, 0, 0, 0.36);
+
+    --sidebar-background: #181818;
+    --sidebar-foreground: #cccccc;
+    --sidebar-border: #2b2b2b;
+    --sidebar-accent: #37373d;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-ring: #0078d4;
+
+    /* Legacy maps for standard tags to avoid breaking other unported UI */
+    --bg-primary: var(--background);
+    --bg-secondary: var(--background-elevated);
+    --bg-card: var(--card);
+    --bg-hover: var(--background-hover);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--foreground-bright);
+    --text-muted: var(--foreground-muted);
 }
 
 /* ── VSCode Modern Light Theme ── */
 [data-theme="light"] {
-    --bg-primary: #f3f3f3;
-    --bg-secondary: #ffffff;
-    --bg-card: #ffffff;
-    --bg-hover: #e8e8e8;
-    --border: #dddddd;
-    --text-primary: #3b3b3b;
-    --text-secondary: #616161;
-    --text-muted: #888888;
-    --shadow-card: none;
+    --foreground: #3b3b3b;
+    --foreground-bright: #1e1e1e;
+    --foreground-muted: #616161;
+    --foreground-subtle: #767676;
+    --error-fg: #f85149;
+    --icon-fg: #3b3b3b;
 
-    --accent-cyan: #0550ae;
-    --accent-green: #107c41;
-    --accent-blue: #006ab1;
+    --background: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #3b3b3b;
+    --background-elevated: #f8f8f8;
+    --background-hover: #e8e8e8;
+    --background-selected: #e4e6f1;
+    --background-panel: #f8f8f8;
+
+    --primary: #005fb8;
+    --primary-hover: #0258a8;
+    --primary-foreground: #ffffff;
+
+    --secondary: #e5e5e5;
+    --secondary-foreground: #3b3b3b;
+
+    --muted: #e8e8e8;
+    --muted-foreground: #6e6e6e;
+
+    --accent: #e4e6f1;
+    --accent-foreground: #1e1e1e;
+
+    --success: #2ea043;
+    --warning: #bf8700;
+    --info: #218bff;
+    --destructive: #be1100;
+
+    --ring: #005fb8;
+    --border: #cecece;
+    --border-subtle: #e5e5e5;
+
+    --toggle-active: rgba(0, 120, 212, 0.35);
+    --hover-overlay: rgba(31, 31, 31, 0.07);
+    --shadow: rgba(0, 0, 0, 0.16);
+
+    --sidebar-background: #f8f8f8;
+    --sidebar-foreground: #3b3b3b;
+    --sidebar-border: #e5e5e5;
+    --sidebar-accent: #e4e6f1;
+    --sidebar-accent-foreground: #1e1e1e;
+    --sidebar-ring: #005fb8;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: var(--font-sans); /* Use sans-serif globally for apps like VSCode */
-    font-size: 13px; /* VSCode default */
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans); 
+    font-size: 13px;
     line-height: 1.5;
     overflow: hidden;
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 }
