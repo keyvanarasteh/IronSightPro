@@ -15,7 +15,7 @@ impl TextareaVariant {
             TextareaVariant::Default => "default",
             TextareaVariant::Fade => "fade",
             TextareaVariant::Outline => "outline",
-            TextareaVariant::Ghost => "ghost",
+
         }
     }
 }

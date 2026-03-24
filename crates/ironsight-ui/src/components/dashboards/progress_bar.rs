@@ -70,7 +70,7 @@ pub fn ScoreBar(
             div {
                 style: "width: 48px; height: 4px; background: var(--bg-hover); border-radius: 2px; overflow: hidden;",
                 div {
-                    style: "width: {pct}%; height: 100%; background: {color}; border-radius: 2px;",
+                    style: "width: {percentage}%; height: 100%; background: {color}; border-radius: 2px;",
                 }
             }
             span {
