@@ -1,0 +1,19 @@
+title: "[Showcase] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Built something cool with IronSight? A custom integration, a dashboard extension, or deployed it in a massive environment? Share it here!
+  - type: textarea
+    id: description
+    attributes:
+      label: What did you build or achieve?
+      description: Describe your project, extension, or use case.
+      placeholder: "I integrated IronSight with my custom ELK stack to..."
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links / Images
+      description: Provide links to your repository, blog post, or paste some screenshots!

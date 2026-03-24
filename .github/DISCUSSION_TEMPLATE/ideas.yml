@@ -1,0 +1,18 @@
+title: "[Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea for IronSight but not quite ready to submit a formal Feature Request? Discuss it here to gauge community interest and technical feasibility first!
+  - type: textarea
+    id: idea
+    attributes:
+      label: The Idea
+      description: What's the pitch?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is this useful?
+      description: Who would benefit from this?

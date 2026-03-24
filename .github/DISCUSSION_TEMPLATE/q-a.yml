@@ -1,0 +1,22 @@
+title: "[Q&A] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask questions about how to configure, compile, or extend IronSight! 
+        Before asking, search existing discussions to see if your question was already answered.
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Explain what you are trying to achieve and what your environment is.
+      placeholder: "I'm trying to run IronSight on Ubuntu 22.04 with eBPF enabled, but..."
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What is your actual question?
+    validations:
+      required: true
