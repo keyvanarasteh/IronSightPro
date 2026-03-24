@@ -20,9 +20,10 @@
 </script>
 
 <nav
+	data-tauri-drag-region
 	class="bg-activitybar-bg border-activitybar-border flex w-12 shrink-0 flex-col items-center justify-between border-r py-2"
 >
-	<div class="flex w-full flex-col gap-1">
+	<div data-tauri-drag-region class="flex w-full flex-col gap-1">
 		<a
 			href="/"
 			title="Home"

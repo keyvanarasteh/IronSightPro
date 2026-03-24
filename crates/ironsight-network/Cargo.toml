@@ -13,5 +13,5 @@ tracing.workspace = true
 thiserror.workspace = true
 chrono.workspace = true
 anyhow.workspace = true
-hickory-resolver = "0.24"
+hickory-resolver = "0.25.2"
 tokio = { workspace = true }

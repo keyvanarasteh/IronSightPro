@@ -29,11 +29,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 thiserror = "2"
-toml = "0.8"
-nix = { version = "0.29", features = ["signal", "process", "user"] }
+toml = "0.9"
+nix = { version = "0.31", features = ["signal", "process", "user"] }
 
 # System
-sysinfo = "0.34"
+sysinfo = "0.38"
 crossbeam-channel = "0.5"
 
 # Security
@@ -49,8 +49,8 @@ xxhash-rust = { version = "0.8", features = ["xxh3"] }
 
 # Report
 uuid = { version = "1", features = ["v4", "serde"] }
-whoami = "1"
-reqwest = { version = "0.12", features = ["json"] }
+whoami = "2.1"
+reqwest = { version = "0.13", features = ["json"] }
 
 # UI
 dioxus = { version = "0.7", features = ["desktop", "router"] }

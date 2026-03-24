@@ -17,4 +17,4 @@ anyhow.workspace = true
 chrono.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
-minidump-writer = "0.8"
+minidump-writer = "0.11"

@@ -176,17 +176,16 @@
 <svelte:window onkeydown={handleGlobalKeydown} />
 
 <header
-	data-tauri-drag-region
 	class="bg-titlebar-bg text-titlebar-fg border-titlebar-border z-50 flex h-10 shrink-0 items-center justify-between border-b px-3 select-none"
 >
 	<div data-tauri-drag-region class="flex items-center gap-4">
 		<div data-tauri-drag-region class="flex items-center gap-3 text-[12px] text-inherit opacity-80">
-			<svg data-tauri-drag-region class="h-4 w-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+			<svg class="h-4 w-4 text-blue-500 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
 				<path
 					d="M23.5 15.4l-3.8-3.8 3.8-3.9c.4-.4.4-1 0-1.4l-2.1-2.1c-.4-.4-1-.4-1.4 0l-5.1 5.1-3-3-1.1 1.1 3 3-5.3 5.3-3.2-3.2-1.1 1.1 3.2 3.2-1.9 1.9c-.4.4-.4 1 0 1.4l2.1 2.1c.4.4 1 .4 1.4 0l3.8-3.8 3.8 3.8c.4.4 1 .4 1.4 0l2.1-2.1c.5-.4.5-1.1.1-1.5z"
 				/>
 			</svg>
-			<div data-tauri-drag-region class="flex gap-0">
+			<div class="flex gap-0">
 				{#each menuItems as category, i (category.label)}
 					<div
 						class="menu-trigger relative"
@@ -195,12 +194,12 @@
 						onmouseenter={() => handleMenuEnter(i)}
 						onmouseleave={handleMenuLeave}
 					>
-						<button
+						<button data-tauri-drag-region="false"
 							class="hover:bg-foreground/10 m-0 flex cursor-pointer items-center gap-0.5 rounded border-none bg-transparent px-2 py-0.5 text-[12px] text-inherit transition-colors
 								{openMenuIndex === i ? 'bg-foreground/10' : ''}"
 						>
 							{category.label}
-							<ChevronDown class="h-2.5 w-2.5 opacity-50" />
+							<ChevronDown class="h-2.5 w-2.5 opacity-50 pointer-events-none" />
 						</button>
 
 						{#if openMenuIndex === i}
@@ -222,7 +221,7 @@
 									>
 										{#if item.icon}
 											{@const Icon = item.icon}
-											<Icon class="h-3.5 w-3.5 shrink-0 opacity-70" />
+											<Icon class="h-3.5 w-3.5 shrink-0 opacity-70 pointer-events-none" />
 										{/if}
 										<span class="truncate">{item.label}</span>
 									</a>
@@ -235,12 +234,12 @@
 		</div>
 	</div>
 
-	<div data-tauri-drag-region class="relative mx-4 block max-w-xl flex-1 flex h-full items-center">
-		<button
+	<div data-tauri-drag-region class="relative mx-4 max-w-xl flex-1 flex h-full items-center">
+		<button data-tauri-drag-region="false"
 			onclick={() => (aiChatOpen = true)}
 			class="bg-foreground/5 hover:bg-foreground/10 border-titlebar-border relative m-0 flex h-6 w-full cursor-pointer items-center justify-center gap-2 rounded border text-[11px] text-inherit opacity-60 transition-colors hover:opacity-100"
 		>
-			<Search class="h-3 w-3" />
+			<Search class="h-3 w-3 pointer-events-none" />
 			<span>{workspaceName}</span>
 			<div class="pointer-events-none absolute right-1.5 flex items-center">
 				<KeybindingLabel keybinding="Cmd+K" os="mac" />
@@ -248,53 +247,53 @@
 		</button>
 	</div>
 
-	<div data-tauri-drag-region class="flex items-center gap-4 opacity-80 h-full">
-		<div data-tauri-drag-region class="flex items-center gap-3 text-inherit h-full">
-			<button
+	<div class="flex items-center gap-4 opacity-80 h-full">
+		<div class="flex items-center gap-3 text-inherit h-full">
+			<button data-tauri-drag-region="false"
 				class="m-0 cursor-pointer border-none bg-transparent p-0 text-inherit"
 				aria-label="Layout"
 				onclick={onToggleSidebar}
 			>
-				<Layout class="hover:text-foreground h-4 w-4" />
+				<Layout class="hover:text-foreground h-4 w-4 pointer-events-none" />
 			</button>
-			<button
+			<button data-tauri-drag-region="false"
 				class="m-0 block cursor-pointer border-none bg-transparent p-0 text-inherit"
 				aria-label="Terminal"
 				onclick={onToggleTerminal}
 			>
-				<PanelBottom class="h-4 w-4 hover:text-white" />
+				<PanelBottom class="h-4 w-4 hover:text-white pointer-events-none" />
 			</button>
 		</div>
 
 		<!-- Window controls -->
 		<div class="flex h-full items-center">
-			<button
+			<button data-tauri-drag-region="false"
 				class="flex h-8 w-9 items-center justify-center border-none bg-transparent text-inherit transition-colors hover:bg-white/10"
 				onclick={minimize}
 				aria-label="Minimize"
 			>
-				<Minus class="h-3.5 w-3.5" />
+				<Minus class="h-3.5 w-3.5 pointer-events-none" />
 			</button>
-			<button
+			<button data-tauri-drag-region="false"
 				class="flex h-8 w-9 items-center justify-center border-none bg-transparent text-inherit transition-colors hover:bg-white/10"
 				onclick={toggleMaximize}
 				aria-label={isMaximized ? 'Restore' : 'Maximize'}
 			>
 				{#if isMaximized}
-					<svg class="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
+					<svg class="h-3 w-3 pointer-events-none" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
 						<rect x="3" y="5" width="8" height="8" rx="0.5" />
 						<path d="M5 5V3.5a.5.5 0 0 1 .5-.5H13.5a.5.5 0 0 1 .5.5V11.5a.5.5 0 0 1-.5.5H11" />
 					</svg>
 				{:else}
-					<Square class="h-3 w-3" />
+					<Square class="h-3 w-3 pointer-events-none" />
 				{/if}
 			</button>
-			<button
+			<button data-tauri-drag-region="false"
 				class="flex h-8 w-9 items-center justify-center border-none bg-transparent text-inherit transition-colors hover:bg-red-500/90 hover:text-white"
 				onclick={close}
 				aria-label="Close"
 			>
-				<X class="h-3.5 w-3.5" />
+				<X class="h-3.5 w-3.5 pointer-events-none" />
 			</button>
 		</div>
 	</div>

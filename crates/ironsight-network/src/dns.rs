@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
-use hickory_resolver::TokioAsyncResolver;
+use hickory_resolver::TokioResolver;
 use hickory_resolver::config::*;
 
 /// Result of a reverse DNS lookup.
@@ -52,17 +52,19 @@ impl DnsEntry {
 }
 
 pub struct AsyncDnsResolver {
-    resolver: TokioAsyncResolver,
+    resolver: TokioResolver,
     cache: HashMap<IpAddr, DnsEntry>,
     timeout: Duration,
 }
 
 impl AsyncDnsResolver {
     pub async fn new() -> anyhow::Result<Self> {
-        let resolver = TokioAsyncResolver::tokio(
+        let resolver = hickory_resolver::TokioResolver::builder_with_config(
             ResolverConfig::default(),
-            ResolverOpts::default(),
-        );
+            hickory_resolver::name_server::TokioConnectionProvider::default()
+        )
+        .with_options(ResolverOpts::default())
+        .build();
         Ok(Self { 
             resolver, 
             cache: HashMap::new(), 

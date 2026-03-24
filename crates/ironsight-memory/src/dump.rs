@@ -13,8 +13,8 @@ pub fn dump_memory(pid: u32, output_dir: &Path) -> anyhow::Result<(PathBuf, u32,
     let mut output = std::fs::File::create(&dump_path)
         .map_err(|e| anyhow::anyhow!("Cannot create dump file: {e}"))?;
 
-    minidump_writer::minidump_writer::MinidumpWriter::new(pid as i32, pid as i32)
-        .dump(&mut output)
+    minidump_writer::minidump_writer::MinidumpWriterConfig::new(pid as i32, pid as i32)
+        .write(&mut output)
         .map_err(|e| anyhow::anyhow!("Failed to write minidump: {:?}", e))?;
 
     let meta = output.metadata()
