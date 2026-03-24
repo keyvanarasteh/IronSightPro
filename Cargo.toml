@@ -10,7 +10,7 @@ members = [
     "crates/ironsight-response",
     "crates/ironsight-report",
     "crates/ironsight-service",
-    "crates/ironsight-ui",
+    "crates/ironsight-ui/src-tauri",
 ]
 
 [workspace.package]
