@@ -37,7 +37,7 @@ sysinfo = "0.34"
 crossbeam-channel = "0.5"
 
 # Security
-sha2 = "0.10"
+sha2 = "0.11"
 hex = "0.4"
 
 # Memory / RE
