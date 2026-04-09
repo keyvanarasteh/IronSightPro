@@ -33,7 +33,7 @@ toml = "0.8"
 nix = { version = "0.29", features = ["signal", "process", "user"] }
 
 # System
-sysinfo = "0.34"
+sysinfo = "0.38"
 crossbeam-channel = "0.5"
 
 # Security
